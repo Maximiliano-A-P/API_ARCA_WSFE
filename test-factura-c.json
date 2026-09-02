@@ -1,0 +1,14 @@
+{
+  "token": "token-de-prueba",
+  "sign": "sign-de-prueba",
+  "cuit": "20111111112",
+  "puntoVenta": 1,
+  "tipoComprobante": 11,
+  "concepto": 1,
+  "docTipo": 96,
+  "docNro": "12345678",
+  "condicionIvaReceptorId": 5,
+  "fecha": "20260827",
+  "importeTotal": 1210,
+  "importeNeto": 1000
+}

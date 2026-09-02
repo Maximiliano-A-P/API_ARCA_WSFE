@@ -1,0 +1,775 @@
+================================================================================
+ DOCUMENTACIÓN - ARCA API (WSFE)
+ API intermediaria para facturación electrónica AFIP/ARCA (WSFE)
+================================================================================
+
+Versión: 1.0.0
+Última actualización: Septiembre 2026
+
+
+--------------------------------------------------------------------------------
+ÍNDICE
+--------------------------------------------------------------------------------
+  1.  Qué es esta API
+  2.  Glosario de términos
+  3.  Arquitectura / Flujo general
+  4.  Estructura del proyecto
+  5.  Instalación y puesta en marcha
+  6.  Variables de entorno
+  7.  Autenticación
+  8.  Formato general de respuesta
+  9.  Endpoints disponibles
+  10. Tabla de códigos de tipo de comprobante
+  11. Tipos de documento del receptor
+  12. Ambientes (Homologación vs Producción)
+  13. Límites y comportamiento interno
+  14. Tabla de códigos de error
+  15. Seguridad
+  16. Problemas comunes / Troubleshooting
+  17. Ejemplo completo - Factura C
+  18. Historial de cambios
+
+
+--------------------------------------------------------------------------------
+1. QUÉ ES ESTA API
+--------------------------------------------------------------------------------
+
+Esta API es un servicio intermediario, construido en Node.js + TypeScript, que
+se encarga exclusivamente de comunicarse con el servicio WSFE (Web Service de
+Facturación Electrónica) de ARCA (ex AFIP).
+
+Es multi-tenant: puede ser usada por múltiples empresas/CUITs distintos, ya que
+no almacena ni genera credenciales propias. Cada request que recibe trae las
+credenciales (Token y Sign) que la aplicación cliente (Laravel) ya obtuvo
+previamente del servicio WSAA de ARCA.
+
+QUÉ HACE:
+  - Consulta el último comprobante autorizado para un punto de venta / tipo
+    de comprobante determinado.
+  - Solicita el CAE (Código de Autorización Electrónico) para un comprobante
+    nuevo, reconociendo automáticamente el tipo (Factura A/B/C/M/E, Notas de
+    Crédito/Débito) y armando el request SOAP correcto según corresponda.
+  - Normaliza las respuestas de ARCA (que vienen en formato SOAP/XML complejo)
+    a un JSON simple y consistente.
+
+QUÉ NO HACE (queda del lado de Laravel):
+  - No maneja el WSAA (autenticación, certificado, clave privada, generación
+    ni renovación de Token/Sign).
+  - No genera PDF, QR, ni envía comprobantes por email.
+  - No decide reintentos de negocio ni guarda las facturas en base de datos.
+  - No conoce el certificado de ningún CUIT.
+
+
+--------------------------------------------------------------------------------
+2. GLOSARIO DE TÉRMINOS
+--------------------------------------------------------------------------------
+
+  ARCA / AFIP   Administración federal de ingresos públicos de Argentina
+                (ARCA es el nombre actual del organismo, antes AFIP). Es
+                quien opera los servicios web de facturación electrónica.
+
+  WSAA          Web Service de Autenticación y Autorización. Es el servicio
+                de ARCA que, a partir de un certificado digital y una clave
+                privada, devuelve un Token y un Sign temporales (válidos
+                por un tiempo limitado, normalmente 12hs). Lo maneja
+                Laravel, NO esta API.
+
+  WSFE          Web Service de Facturación Electrónica. Es el servicio de
+                ARCA que efectivamente autoriza comprobantes (facturas,
+                notas de crédito/débito) y entrega el CAE. Es el único
+                servicio con el que habla esta API.
+
+  Token / Sign  Credenciales temporales que devuelve el WSAA. Se usan para
+                autenticar cada llamada al WSFE. Tienen vencimiento, por
+                eso Laravel debe renovarlas periódicamente y esta API
+                nunca las guarda ni las cachea.
+
+  CAE           Código de Autorización Electrónico. Es el número que ARCA
+                devuelve cuando aprueba un comprobante — sin CAE, la
+                factura no es válida fiscalmente.
+
+  CUIT          Clave Única de Identificación Tributaria. Identifica al
+                emisor (la empresa) ante ARCA. Cada request a esta API
+                indica a nombre de qué CUIT se está operando.
+
+  Punto de
+  Venta         Número que identifica el "punto" físico o lógico desde el
+                que se emite (ej: local 1, e-commerce, etc.). Cada CUIT
+                puede tener varios puntos de venta habilitados en ARCA,
+                y la numeración de comprobantes es independiente por
+                punto de venta.
+
+  Comprobante
+  A / B / C /
+  M / E         La "letra" del comprobante depende de la condición frente
+                al IVA del emisor y del receptor. A grandes rasgos: A y M
+                discriminan IVA, B y C no, y E es para exportación. Ver
+                la tabla completa en la sección 10.
+
+  WSDL          Web Services Description Language. Es el archivo XML que
+                describe todos los métodos disponibles del servicio SOAP
+                de ARCA (WSFE). El cliente SOAP de esta API lo descarga
+                una vez y lo cachea en memoria.
+
+
+--------------------------------------------------------------------------------
+3. ARQUITECTURA / FLUJO GENERAL
+--------------------------------------------------------------------------------
+
+    LARAVEL                         ARCA API                        ARCA
+    --------                        --------                        ----
+    Maneja WSAA
+    (certificado, CUIT,
+    Token, Sign)
+         |
+         | HTTP/JSON
+         | Token + Sign + datos factura
+         v
+                                Valida el request
+                                Reconoce el tipo de
+                                comprobante
+                                Arma el request SOAP
+                                     |
+                                     | SOAP/XML
+                                     v
+                                                                 Procesa
+                                                                 Devuelve CAE
+                                                                 o rechazo
+                                     ^
+                                     |
+                                Normaliza respuesta
+         ^
+         | JSON: CAE / errores
+         |
+    Genera PDF, QR,
+    guarda en BD,
+    envía por email
+
+Principio de diseño: esta API es completamente STATELESS respecto de las
+empresas que la usan. No guarda nada de una llamada a la siguiente (salvo
+el cliente SOAP cacheado, que es genérico y no pertenece a ningún CUIT en
+particular). Esto permite que la misma instancia sirva a cualquier cantidad
+de empresas sin mezclar datos entre ellas, y que se pueda escalar
+horizontalmente si hiciera falta (con la salvedad del rate limiting y el
+propio caché SOAP, que hoy viven en memoria de un solo proceso — ver
+sección 13).
+
+
+--------------------------------------------------------------------------------
+4. ESTRUCTURA DEL PROYECTO
+--------------------------------------------------------------------------------
+
+    arca-api/
+    ├── src/
+    │   ├── config/
+    │   │   ├── wsfe.config.ts           Carga y valida variables de entorno
+    │   │   └── comprobantes.catalog.ts  Códigos de tipo de comprobante (AFIP)
+    │   ├── soap/
+    │   │   └── wsfeClient.ts            Cliente SOAP cacheado hacia WSFE
+    │   ├── dto/
+    │   │   └── facturaRequest.schema.ts Validación (Zod) del request de factura
+    │   ├── builders/
+    │   │   ├── facturaBuilder.interface.ts
+    │   │   ├── camposComunes.ts
+    │   │   ├── facturaConIva.builder.ts     (Factura A / M)
+    │   │   ├── facturaSinIva.builder.ts     (Factura B / C)
+    │   │   ├── facturaExportacion.builder.ts (Factura E)
+    │   │   └── facturaBuilder.factory.ts    Elige el builder según el tipo
+    │   ├── services/
+    │   │   ├── consultarUltimoComprobante.service.ts
+    │   │   ├── normalizeWsfeResponse.ts
+    │   │   └── solicitarCae.service.ts      Orquesta todo el flujo de emisión
+    │   ├── middlewares/
+    │   │   ├── auth.middleware.ts       Valida X-Internal-Api-Key
+    │   │   ├── rateLimit.middleware.ts  Límite de solicitudes por CUIT
+    │   │   ├── notFound.middleware.ts   Maneja rutas inexistentes (404)
+    │   │   └── errorHandler.middleware.ts Red de seguridad para errores
+    │   │                                   no capturados (500)
+    │   ├── controllers/
+    │   │   └── wsfe.controller.ts       Recibe requests HTTP, arma respuestas
+    │   ├── routes/
+    │   │   ├── wsfe.routes.ts           Rutas /wsfe/*
+    │   │   └── admin.routes.ts          Rutas /admin/*
+    │   ├── utils/
+    │   │   └── logger.ts                Logging con contexto de CUIT
+    │   └── app.ts                       Punto de entrada, arma el servidor
+    ├── .env                             Configuración local (NO se versiona)
+    ├── .gitignore
+    ├── package.json
+    ├── package-lock.json
+    └── tsconfig.json
+
+Patrón usado para builders: Strategy + Factory. Cada tipo de comprobante
+que requiere un armado distinto tiene su propia clase (Strategy), y el
+factory (facturaBuilder.factory.ts) elige cuál usar según el
+"tipoComprobante" que llega en el request — así se puede sumar un tipo
+nuevo sin modificar el código que ya existe.
+
+
+--------------------------------------------------------------------------------
+5. INSTALACIÓN Y PUESTA EN MARCHA
+--------------------------------------------------------------------------------
+
+Requisitos previos:
+  - Node.js (versión 18 o superior recomendada)
+  - npm (viene con Node.js)
+
+Pasos:
+
+  1) Clonar / copiar el proyecto y pararse en la carpeta raíz (arca-api/,
+     donde está el package.json).
+
+  2) Instalar dependencias:
+        npm install
+
+  3) Crear el archivo .env en la raíz del proyecto (ver sección 6 para el
+     detalle de cada variable). Sin este archivo, la API no arranca.
+
+  4) Levantar en modo desarrollo (recarga automática ante cambios):
+        npm run dev
+
+  5) Para producción, primero compilar y después ejecutar el JS compilado:
+        npm run build      (genera la carpeta dist/)
+        npm run start      (corre dist/app.js)
+
+Si todo está bien configurado, la consola debería mostrar:
+    arca-api corriendo en puerto <PORT>
+
+Y se puede verificar que está viva con:
+    GET http://localhost:<PORT>/health   →   { "status": "ok" }
+
+
+--------------------------------------------------------------------------------
+6. VARIABLES DE ENTORNO
+--------------------------------------------------------------------------------
+
+Archivo: .env (en la raíz del proyecto, nunca se sube a git)
+
+  Variable                   │ Obligatoria │ Descripción
+  ---------------------------│-------------│-----------------------------------
+  PORT                       │ No (def:    │ Puerto HTTP donde escucha el
+                             │ 3000)       │ servidor.
+  ---------------------------│-------------│-----------------------------------
+  WSFE_WSDL_URL              │ Sí          │ URL del WSDL de WSFE. Distinta
+                             │             │ para homologación y producción
+                             │             │ (ver sección 12).
+  ---------------------------│-------------│-----------------------------------
+  INTERNAL_API_KEY           │ Sí          │ Secreto compartido con Laravel
+                             │             │ para autenticar llamadas a esta
+                             │             │ API (header X-Internal-Api-Key).
+  ---------------------------│-------------│-----------------------------------
+  RATE_LIMIT_VENTANA_MS      │ No (def:    │ Duración de la ventana de rate
+                             │ 60000)      │ limiting, en milisegundos.
+  ---------------------------│-------------│-----------------------------------
+  RATE_LIMIT_MAX_REQUESTS    │ No (def:    │ Máximo de solicitudes por CUIT
+                             │ 30)         │ dentro de esa ventana.
+
+Ejemplo de .env completo:
+
+    PORT=3000
+    WSFE_WSDL_URL=https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL
+    INTERNAL_API_KEY=<secreto largo y random, ver sección 15>
+    RATE_LIMIT_VENTANA_MS=60000
+    RATE_LIMIT_MAX_REQUESTS=30
+
+Las variables marcadas como "Obligatorias" hacen que la API directamente
+NO ARRANQUE si faltan (falla rápido con un mensaje claro indicando cuál
+falta), para evitar que el problema aparezca recién con el primer request.
+
+
+--------------------------------------------------------------------------------
+7. AUTENTICACIÓN
+--------------------------------------------------------------------------------
+
+Todos los endpoints bajo /wsfe/* y /admin/* requieren un header de autenticación
+interno (esto NO es el Token/Sign de ARCA, es un secreto compartido entre
+Laravel y esta API para que nadie más pueda llamarla):
+
+    Header: X-Internal-Api-Key
+    Valor:  <el secreto configurado en el .env de la API, variable
+             INTERNAL_API_KEY>
+
+Si el header falta o no coincide, la API responde:
+
+    HTTP 401
+    {
+      "error": "No autorizado"
+    }
+
+El endpoint /health es público (no requiere este header), pensado para
+monitoreo/health-checks externos.
+
+
+--------------------------------------------------------------------------------
+8. FORMATO GENERAL DE RESPUESTA
+--------------------------------------------------------------------------------
+
+Las respuestas exitosas y de error comparten una forma consistente:
+
+  ÉXITO:
+    {
+      "exito": true,
+      ...datos propios del endpoint...
+    }
+
+  ERROR (validación, rechazo de ARCA, o error interno):
+    {
+      "exito": false,
+      "errores": [
+        { "codigo": "string", "mensaje": "string" }
+      ],
+      "observaciones": [               <- opcional, solo puede venir junto
+        { "codigo": "string", "mensaje": "string" }    con exito: true
+      ]
+    }
+
+Nota sobre "observaciones": una observación de ARCA (por ejemplo, un ajuste
+menor de redondeo) NO significa que el comprobante fue rechazado. El CAE se
+otorga igual. Un "error" sí bloquea la emisión.
+
+
+--------------------------------------------------------------------------------
+9. ENDPOINTS DISPONIBLES
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+9.1  GET /health
+--------------------------------------------------------------------------------
+Descripción:    Chequeo de salud del servidor. No requiere autenticación ni
+                está sujeto a rate limiting.
+Uso típico:     Monitoreo, balanceadores de carga.
+
+Request:        (sin body, sin headers especiales)
+
+Respuesta 200:
+    { "status": "ok" }
+
+
+--------------------------------------------------------------------------------
+9.2  POST /wsfe/solicitar-cae
+--------------------------------------------------------------------------------
+Descripción:    Solicita el CAE para un comprobante nuevo. Reconoce
+                automáticamente el tipo de comprobante (letra A/B/C/M/E,
+                Factura/Nota de Crédito/Nota de Débito) y aplica las reglas
+                de validación y armado correspondientes a cada uno.
+                Sujeto a autenticación y a rate limiting por CUIT.
+
+Headers:
+    Content-Type: application/json
+    X-Internal-Api-Key: <secreto>
+
+Body (JSON) - campos comunes a todos los tipos:
+    {
+      "token": "string",                  // Token de WSAA (provisto por Laravel)
+      "sign": "string",                   // Sign de WSAA (provisto por Laravel)
+      "cuit": "string",                   // CUIT del emisor, sin guiones
+
+      "puntoVenta": number,               // Punto de venta habilitado en ARCA
+      "tipoComprobante": number,          // Ver tabla de códigos (sección 10)
+      "concepto": 1 | 2 | 3,              // 1=Productos 2=Servicios 3=Ambos
+
+      "docTipo": number,                  // Tipo doc. del receptor (80=CUIT,
+                                          //   96=DNI, 99=Consumidor Final)
+      "docNro": "string",                 // Número de documento del receptor
+      "condicionIvaReceptorId": number,   // Condición IVA del receptor
+                                          //   (obligatorio desde RG 5259/2022)
+
+      "fecha": "YYYYMMDD",                // Fecha del comprobante
+      "importeTotal": number,
+      "importeNeto": number,
+      "importeIva": number                // opcional
+    }
+
+Campos ADICIONALES según el tipo de comprobante:
+
+  a) Concepto 2 (Servicios) o 3 (Ambos) -> OBLIGATORIOS:
+       "fchServDesde": "YYYYMMDD",
+       "fchServHasta": "YYYYMMDD",
+       "fchVtoPago":   "YYYYMMDD"
+
+  b) Factura A o M (discriminan IVA) -> OBLIGATORIO:
+       "alicuotasIva": [
+         { "id": number, "baseImp": number, "importe": number }
+       ]
+
+  c) Nota de Crédito o Nota de Débito (cualquier letra) -> OBLIGATORIO:
+       "comprobantesAsociados": [
+         { "tipo": number, "puntoVenta": number, "numero": number }
+       ]
+
+  d) Comprobantes de Exportación (tipo E) -> OBLIGATORIOS:
+       "monedaId": "string",              // ej: "DOL"
+       "monedaCotizacion": number,
+       "paisDestino": number,
+       "permisosEmbarque": [              // opcional, solo bienes físicos
+         { "idPermiso": "string", "destino": number }
+       ]
+
+Respuesta 200 (comprobante aprobado):
+    {
+      "exito": true,
+      "cae": "string",
+      "caeVencimiento": "YYYYMMDD",
+      "numeroComprobante": number,
+      "observaciones": [ ... ]           // opcional
+    }
+
+Respuesta 200 con exito:false (comprobante rechazado por ARCA):
+    {
+      "exito": false,
+      "numeroComprobante": number,
+      "errores": [ { "codigo": "string", "mensaje": "string" } ],
+      "observaciones": [ ... ]           // opcional
+    }
+
+Respuesta 400 (error de validación - el request no cumple el formato):
+    {
+      "exito": false,
+      "errores": [
+        { "codigo": "VALIDACION", "mensaje": "campo: descripción del error" }
+      ]
+    }
+
+Respuesta 401 (falta o es incorrecto el X-Internal-Api-Key)
+Respuesta 429 (se superó el límite de solicitudes para ese CUIT)
+Respuesta 500 (error interno / de conexión con ARCA):
+    {
+      "exito": false,
+      "errores": [ { "codigo": "ERROR_INTERNO", "mensaje": "string" } ]
+    }
+
+
+--------------------------------------------------------------------------------
+9.3  GET /wsfe/ultimo-comprobante
+--------------------------------------------------------------------------------
+Descripción:    Consulta cuál sería el PRÓXIMO número de comprobante a
+                emitir, sin emitir nada. Útil para mostrarle al usuario
+                "el próximo comprobante va a ser el N°..." antes de
+                confirmar la operación.
+                Sujeto a autenticación. NO está sujeto a rate limiting
+                actualmente (el middleware de rate limit lee el CUIT del
+                body, y este endpoint no tiene body — ver sección 13).
+
+Headers:
+    X-Internal-Api-Key: <secreto>
+
+Query params (todos obligatorios):
+    ?token=string
+    &sign=string
+    &cuit=string
+    &puntoVenta=number
+    &tipoComprobante=number
+
+Ejemplo de URL completa:
+    GET /wsfe/ultimo-comprobante?token=XXX&sign=XXX&cuit=20111111112
+        &puntoVenta=1&tipoComprobante=11
+
+Respuesta 200:
+    {
+      "exito": true,
+      "proximoNumero": number
+    }
+
+Respuesta 400 (faltan parámetros):
+    {
+      "exito": false,
+      "errores": [ { "codigo": "VALIDACION", "mensaje": "string" } ]
+    }
+
+Respuesta 401 / 500: igual que en 9.2
+
+
+--------------------------------------------------------------------------------
+9.4  POST /admin/reset-soap-client
+--------------------------------------------------------------------------------
+Descripción:    Fuerza a la API a descartar el cliente SOAP cacheado y
+                reconstruirlo en la próxima llamada (vuelve a descargar
+                el WSDL de ARCA). Uso: mantenimiento, o si la conexión con
+                ARCA queda en un estado raro sin necesidad de reiniciar
+                todo el proceso.
+                Sujeto a autenticación. NO comparte el rate limiting de
+                /wsfe/* (es una ruta administrativa separada, sin límite
+                de solicitudes propio hoy en día).
+
+Headers:
+    X-Internal-Api-Key: <secreto>
+
+Body: (no requiere)
+
+Respuesta 200:
+    {
+      "exito": true,
+      "mensaje": "Cliente SOAP reiniciado"
+    }
+
+
+--------------------------------------------------------------------------------
+9.5  Cualquier otra ruta no definida
+--------------------------------------------------------------------------------
+Descripción:    Cualquier ruta que no coincida con las anteriores (typos,
+                métodos HTTP incorrectos, endpoints viejos, etc.) devuelve
+                un 404 con formato consistente, en vez del HTML por
+                defecto de Express.
+
+Respuesta 404:
+    {
+      "exito": false,
+      "errores": [
+        { "codigo": "NOT_FOUND", "mensaje": "Ruta no encontrada: <MÉTODO> <ruta>" }
+      ]
+    }
+
+
+--------------------------------------------------------------------------------
+10. TABLA DE CÓDIGOS DE TIPO DE COMPROBANTE (definidos por ARCA/AFIP)
+--------------------------------------------------------------------------------
+
+  Código │ Comprobante               │ Letra │ Discrimina IVA  │ Notas
+  -------│---------------------------│-------│-----------------│------------------
+    1    │ Factura                   │  A    │ Sí              │
+    2    │ Nota de Débito            │  A    │ Sí              │ requiere CbtesAsoc
+    3    │ Nota de Crédito           │  A    │ Sí              │ requiere CbtesAsoc
+    6    │ Factura                   │  B    │ No              │
+    7    │ Nota de Débito            │  B    │ No              │ requiere CbtesAsoc
+    8    │ Nota de Crédito           │  B    │ No              │ requiere CbtesAsoc
+   11    │ Factura                   │  C    │ No              │
+   12    │ Nota de Débito            │  C    │ No              │ requiere CbtesAsoc
+   13    │ Nota de Crédito           │  C    │ No              │ requiere CbtesAsoc
+   19    │ Factura                   │  E    │ No              │ exportación
+   20    │ Nota de Débito            │  E    │ No              │ exportación
+   21    │ Nota de Crédito           │  E    │ No              │ exportación
+   51    │ Factura                   │  M    │ Sí              │
+   52    │ Nota de Débito            │  M    │ Sí              │ requiere CbtesAsoc
+   53    │ Nota de Crédito           │  M    │ Sí              │ requiere CbtesAsoc
+
+Nota: la API reconoce el tipo automáticamente a partir del campo
+"tipoComprobante" del request y aplica las reglas de validación y armado
+correspondientes - no hace falta indicarle la letra por separado.
+
+
+--------------------------------------------------------------------------------
+11. TIPOS DE DOCUMENTO DEL RECEPTOR (docTipo) MÁS COMUNES
+--------------------------------------------------------------------------------
+
+    80  = CUIT
+    86  = CUIL
+    96  = DNI
+    99  = Consumidor Final / sin identificar
+
+
+--------------------------------------------------------------------------------
+12. AMBIENTES (HOMOLOGACIÓN vs PRODUCCIÓN)
+--------------------------------------------------------------------------------
+
+La API se conecta al ambiente que esté configurado en su variable de entorno
+WSFE_WSDL_URL:
+
+  Homologación (pruebas):
+    https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL
+
+  Producción:
+    https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL
+
+El cambio de ambiente se hace desde el archivo .env del servidor de la API,
+no requiere modificar código. Los Token/Sign que provee Laravel también
+deben corresponder al mismo ambiente (un Token de homologación no funciona
+contra el WSDL de producción y viceversa).
+
+
+--------------------------------------------------------------------------------
+13. LÍMITES Y COMPORTAMIENTO INTERNO (referencia para debugging)
+--------------------------------------------------------------------------------
+
+  - Rate limiting: por defecto, máximo 30 solicitudes por CUIT cada 60
+    segundos en /wsfe/solicitar-cae. Al superarse, responde HTTP 429. Este
+    límite es en memoria del proceso; si la API corre en más de una
+    instancia, el límite efectivo se multiplica por la cantidad de
+    instancias. Este número NO es un límite impuesto por ARCA — es un
+    valor propio de esta API para protegerse de usos anormales; ARCA
+    puede tener sus propios límites del lado de WSFE que no están
+    documentados públicamente de forma oficial.
+
+    Es configurable sin tocar código, mediante dos variables en el .env
+    del servidor (ver sección 6):
+
+        RATE_LIMIT_VENTANA_MS=60000     (duración de la ventana, en ms)
+        RATE_LIMIT_MAX_REQUESTS=30      (máximo de solicitudes por CUIT
+                                          dentro de esa ventana)
+
+    Si no están definidas, la API usa 60000 / 30 como valores por defecto.
+    Útil para ajustar el límite según el volumen real de cada empresa
+    (por ejemplo, subirlo para una empresa que factura en lote) sin
+    necesidad de recompilar, solo reiniciando el proceso tras el cambio.
+
+    El rate limit lee el CUIT desde el BODY del request, por lo que
+    actualmente solo aplica a POST /wsfe/solicitar-cae. El endpoint GET
+    /wsfe/ultimo-comprobante (que usa query params, no body) no queda
+    limitado por este mecanismo hoy en día.
+
+  - Logging: cada operación se loguea con el CUIT correspondiente como
+    contexto, para poder filtrar/debuggear por empresa. Formato:
+        <timestamp> [NIVEL][CUIT:<cuit>] <mensaje> <contexto JSON>
+
+  - Cliente SOAP: se cachea en memoria tras la primera llamada (evita
+    recargar el WSDL en cada request). Se puede forzar su reinicio con
+    POST /admin/reset-soap-client.
+
+  - Naturaleza stateless: la API no persiste ninguna factura ni CUIT en
+    base de datos propia. Toda la persistencia (guardar el comprobante
+    emitido, asociarlo a un cliente, etc.) es responsabilidad de Laravel.
+
+
+--------------------------------------------------------------------------------
+14. TABLA DE CÓDIGOS DE ERROR (campo "codigo" dentro de "errores")
+--------------------------------------------------------------------------------
+
+  Código         │ HTTP │ Significado
+  ---------------│------│---------------------------------------------------
+  VALIDACION     │ 400  │ El request no cumple el schema esperado (falta un
+                 │      │ campo obligatorio, tipo incorrecto, o falta un
+                 │      │ campo condicional según el tipo de comprobante).
+  ---------------│------│---------------------------------------------------
+  RATE_LIMIT     │ 429  │ Se superó la cantidad de solicitudes permitidas
+                 │      │ para ese CUIT en la ventana de tiempo configurada.
+  ---------------│------│---------------------------------------------------
+  NOT_FOUND      │ 404  │ La ruta solicitada no existe en esta API.
+  ---------------│------│---------------------------------------------------
+  ERROR_INTERNO  │ 500  │ Error no controlado: puede ser un problema de
+                 │      │ conexión con ARCA, un timeout, o una excepción
+                 │      │ inesperada del servidor. El mensaje asociado
+                 │      │ suele traer más detalle.
+  ---------------│------│---------------------------------------------------
+  (código propio │ 200  │ Cuando ARCA rechaza un comprobante (no es un
+   de ARCA, ej:  │      │ error de esta API), el código y mensaje que
+   variable)     │      │ vienen en "errores" son los que devuelve ARCA
+                 │      │ tal cual, ya que dependen de la causa puntual
+                 │      │ del rechazo (dato mal formado, CUIT no habilitado
+                 │      │ para ese punto de venta, etc.).
+
+
+--------------------------------------------------------------------------------
+15. SEGURIDAD
+--------------------------------------------------------------------------------
+
+  - El .env NUNCA debe subirse a git (ya está en .gitignore por defecto).
+    Contiene el secreto compartido con Laravel y, potencialmente, datos
+    sensibles de configuración.
+
+  - INTERNAL_API_KEY debe generarse como un valor largo y aleatorio, no
+    una palabra fácil de adivinar. Se puede generar con:
+        openssl rand -hex 32          (Git Bash / WSL / Linux / Mac)
+    o en PowerShell:
+        -join ((48..57)+(65..90)+(97..122)|Get-Random -Count 48|%{[char]$_})
+
+  - Si el secreto se filtra o se sospecha comprometido, simplemente se
+    genera uno nuevo y se actualiza en ambos lados (esta API y Laravel) —
+    no requiere ningún proceso de "revocación" adicional.
+
+  - Esta API NUNCA debe exponerse directamente a Internet sin protección
+    adicional (firewall, red privada/VPC, o un proxy que solo permita el
+    tráfico desde el servidor de Laravel). El header X-Internal-Api-Key
+    es una capa de defensa, pero no reemplaza restringir el acceso de red.
+
+  - Ningún certificado, clave privada, ni credencial permanente de ARCA
+    pasa nunca por esta API — solo Token/Sign temporales. Esto acota el
+    impacto de un eventual compromiso de este servicio.
+
+
+--------------------------------------------------------------------------------
+16. PROBLEMAS COMUNES / TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+  "No inputs were found in config file..."
+    El tsconfig.json no encuentra archivos .ts dentro de src/. Suele pasar
+    si el TS Server de VSCode quedó con caché vieja (reiniciar con
+    Ctrl+Shift+P → "TypeScript: Restart TS Server"), o si la carpeta src/
+    quedó en un nivel de carpetas distinto al del tsconfig.json/package.json
+    (deben estar todos en la misma carpeta raíz del proyecto).
+
+  "npm error ENOENT ... Could not read package.json"
+    Se está ejecutando npm desde una carpeta que no es la raíz del
+    proyecto. Verificar con "pwd" (o "cd" solo, en PowerShell) en qué
+    carpeta se está parado, y hacer cd hasta la carpeta que contiene el
+    package.json.
+
+  "Option 'moduleResolution=node10' is deprecated"
+    Advertencia (no error) de una versión de TypeScript más nueva. Se
+    soluciona quitando la línea "moduleResolution" del tsconfig.json —
+    con "module": "commonjs" ya se infiere automáticamente sin generar
+    el warning.
+
+  "curl: (7) Failed to connect to localhost:<puerto>"
+    El servidor no está corriendo. Verificar que la terminal con
+    "npm run dev" siga abierta y sin haberse cerrado/crasheado.
+
+  "curl -d '@archivo.json'" no funciona en PowerShell
+    El "curl" de PowerShell es en realidad un alias de Invoke-WebRequest,
+    que no soporta la sintaxis "@archivo" de curl real. Usar "curl.exe"
+    en vez de "curl" (fuerza el binario real de Windows), o reescribir el
+    comando con Invoke-WebRequest y su propia sintaxis (-Body, -Headers).
+
+  "ValidacionDeToken: No valido token..."
+    Este es un rechazo que viene directo de ARCA (no un error de esta
+    API), indicando que el Token/Sign enviados no son válidos — ya sea
+    porque son de prueba/inventados, vencieron, o corresponden a otro
+    ambiente (homologación vs producción). Confirma que la conexión SOAP
+    con ARCA está funcionando correctamente.
+
+  El servidor arranca con "npm run dev" pero falla en "npm run build"
+    "npm run dev" usa --transpile-only y NO chequea tipos, solo convierte
+    TS a JS. "npm run build" sí corre el chequeo completo de tipos. Si
+    falla el build pero no el dev, hay un error de tipos real que hay
+    que corregir antes de llevar el código a producción.
+
+
+--------------------------------------------------------------------------------
+17. EJEMPLO COMPLETO - FACTURA C (la más simple, sin discriminar IVA)
+--------------------------------------------------------------------------------
+
+Request:
+  POST /wsfe/solicitar-cae
+  Headers:
+    Content-Type: application/json
+    X-Internal-Api-Key: <secreto>
+  Body:
+    {
+      "token": "<token de WSAA>",
+      "sign": "<sign de WSAA>",
+      "cuit": "20111111112",
+      "puntoVenta": 1,
+      "tipoComprobante": 11,
+      "concepto": 1,
+      "docTipo": 96,
+      "docNro": "12345678",
+      "condicionIvaReceptorId": 5,
+      "fecha": "20260902",
+      "importeTotal": 1210,
+      "importeNeto": 1000
+    }
+
+Respuesta esperada (aprobado):
+    {
+      "exito": true,
+      "cae": "71234567890123",
+      "caeVencimiento": "20260912",
+      "numeroComprobante": 45
+    }
+
+
+--------------------------------------------------------------------------------
+18. HISTORIAL DE CAMBIOS
+--------------------------------------------------------------------------------
+
+  Versión 1.0.0 (Septiembre 2026)
+    - Versión inicial: endpoints /wsfe/solicitar-cae, /wsfe/ultimo-comprobante,
+      /admin/reset-soap-client, /health.
+    - Soporte completo para Factura/NC/ND A, B, C, M y E (exportación).
+    - Validación condicional por tipo de comprobante (Zod).
+    - Manejo global de errores (404 + excepciones no capturadas).
+    - Logging con contexto de CUIT.
+    - Rate limiting por CUIT, configurable vía variables de entorno.
+
+
+================================================================================
+ FIN DEL DOCUMENTO
+================================================================================

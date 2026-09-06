@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API ARCA WSFE — Documentación</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f1117;
+    color: #e4e6eb;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { text-align: center; margin-bottom: 48px; }
+  h1 { font-size: 2rem; margin-bottom: 8px; color: #fff; }
+  .subtitle { color: #9aa0ac; font-size: 1.05rem; }
+  .badge {
+    display: inline-block; background: #1f6feb22; color: #58a6ff;
+    border: 1px solid #1f6feb55; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.8rem; margin-top: 12px;
+  }
+  section { margin-bottom: 40px; }
+  h2 {
+    font-size: 1.3rem; color: #58a6ff; border-bottom: 1px solid #2a2e37;
+    padding-bottom: 10px; margin-bottom: 20px;
+  }
+  .endpoint {
+    background: #161b22; border: 1px solid #2a2e37; border-radius: 10px;
+    padding: 20px 24px; margin-bottom: 20px;
+  }
+  .method {
+    display: inline-block; padding: 3px 10px; border-radius: 6px;
+    font-weight: 700; font-size: 0.8rem; margin-right: 10px;
+  }
+  .get { background: #1f6feb33; color: #58a6ff; }
+  .post { background: #23863633; color: #3fb950; }
+  .route { font-family: 'Courier New', monospace; font-size: 1rem; color: #fff; }
+  .desc { color: #9aa0ac; margin: 10px 0 16px; font-size: 0.95rem; }
+  .uso {
+    background: #1c2333; border-left: 3px solid #58a6ff; padding: 10px 14px;
+    margin: 14px 0 18px; font-size: 0.9rem; color: #c9d1d9; border-radius: 0 6px 6px 0;
+  }
+  .uso strong { color: #58a6ff; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2a2e37; }
+  th { color: #9aa0ac; font-weight: 600; }
+  code, .code-inline {
+    background: #21262d; color: #f0883e; padding: 2px 6px;
+    border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.85rem;
+  }
+  pre {
+    background: #010409; border: 1px solid #2a2e37; border-radius: 8px;
+    padding: 16px; overflow-x: auto; font-size: 0.85rem;
+  }
+  pre code { background: none; padding: 0; color: #c9d1d9; }
+  .label { font-weight: 600; color: #e4e6eb; margin: 16px 0 6px; font-size: 0.92rem; }
+  .required { color: #f85149; font-size: 0.75rem; }
+  .optional { color: #9aa0ac; font-size: 0.75rem; }
+  footer { text-align: center; color: #6e7681; font-size: 0.85rem; margin-top: 60px; }
+  a { color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🧾 API ARCA WSFE</h1>
+    <p class="subtitle">API intermediaria para facturación electrónica AFIP/ARCA</p>
+    <span class="badge">● Servicio activo</span>
+  </header>
+
+  <section>
+    <h2>¿Qué es esta API?</h2>
+    <p class="desc" style="color:#c9d1d9;">
+      Se encarga de comunicarse con el servicio WSFE (Web Service de Facturación
+      Electrónica) de ARCA para solicitar el CAE de un comprobante, consultar el
+      próximo número disponible, y devolver todo en un formato JSON simple.
+      No maneja el WSAA (autenticación/certificado) — eso lo resuelve la
+      aplicación que consume esta API, que le pasa el Token y Sign ya generados
+      en cada request.
+    </p>
+  </section>
+
+  <section>
+    <h2>Autenticación</h2>
+    <p class="desc">
+      Todas las rutas, salvo <span class="code-inline">/health</span>, exigen un
+      header de autenticación. Sin él, o con un valor incorrecto, la API
+      responde <code>401 Unauthorized</code> antes de mirar nada más del request.
+    </p>
+
+    <div class="label">Header que hay que enviar en cada request:</div>
+    <pre><code>X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+    <div class="label">Ejemplo de cómo se ve un request completo con el header incluido:</div>
+    <pre><code>POST /wsfe/solicitar-cae HTTP/1.1
+Host: api-arca-wsfe.onrender.com
+Content-Type: application/json
+X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
+
+{
+  "token": "...",
+  "sign": "...",
+  ...
+}</code></pre>
+
+    <div class="label">Respuesta si falta el header o está mal:</div>
+    <pre><code>HTTP/1.1 401 Unauthorized
+
+{ "error": "No autorizado" }</code></pre>
+  </section>
+
+  <section>
+    <h2>Endpoints</h2>
+
+    <!-- HEALTH -->
+    <div class="endpoint">
+      <span class="method get">GET</span><span class="route">/health</span>
+      <div class="uso"><strong>¿Para qué se usa?</strong> Sirve para comprobar que la API está en línea y respondiendo, sin necesitar ninguna credencial. Es el primer endpoint a probar si algo no funciona — si este falla, el problema es que el servidor no está corriendo, no un tema de datos o autenticación.</div>
+
+      <div class="label">Headers requeridos:</div>
+      <pre><code>(ninguno)</code></pre>
+
+      <div class="label">Ejemplo de request:</div>
+      <pre><code>GET /health HTTP/1.1
+Host: api-arca-wsfe.onrender.com</code></pre>
+
+      <div class="label">Respuesta 200:</div>
+      <pre><code>{ "status": "ok" }</code></pre>
+    </div>
+
+    <!-- SOLICITAR CAE -->
+    <div class="endpoint">
+      <span class="method post">POST</span><span class="route">/wsfe/solicitar-cae</span>
+      <div class="uso"><strong>¿Para qué se usa?</strong> Es el endpoint principal: pide a ARCA que autorice un comprobante nuevo (Factura, Nota de Crédito o Nota de Débito) y devuelva el CAE correspondiente. Reconoce automáticamente el tipo de comprobante a partir del campo <span class="code-inline">tipoComprobante</span> y aplica las validaciones y el armado correctos para cada letra (A, B, C, M, E).</div>
+
+      <div class="label">Headers requeridos:</div>
+      <pre><code>Content-Type: application/json
+X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+      <div class="label">Body (JSON) — campos comunes a todos los tipos:</div>
+      <table>
+        <tr><th>Campo</th><th>Tipo</th><th>Detalle</th></tr>
+        <tr><td>token</td><td>string</td><td><span class="required">requerido</span> — Token de WSAA</td></tr>
+        <tr><td>sign</td><td>string</td><td><span class="required">requerido</span> — Sign de WSAA</td></tr>
+        <tr><td>cuit</td><td>string</td><td><span class="required">requerido</span> — CUIT del emisor, sin guiones</td></tr>
+        <tr><td>puntoVenta</td><td>number</td><td><span class="required">requerido</span> — punto de venta habilitado en ARCA</td></tr>
+        <tr><td>tipoComprobante</td><td>number</td><td><span class="required">requerido</span> — código AFIP (1, 6, 11, 19, 51, etc. — ver tabla más abajo)</td></tr>
+        <tr><td>concepto</td><td>1 | 2 | 3</td><td><span class="required">requerido</span> — 1=Productos 2=Servicios 3=Ambos</td></tr>
+        <tr><td>docTipo</td><td>number</td><td><span class="required">requerido</span> — 80=CUIT 96=DNI 99=Consumidor Final</td></tr>
+        <tr><td>docNro</td><td>string</td><td><span class="required">requerido</span> — número de documento del receptor</td></tr>
+        <tr><td>condicionIvaReceptorId</td><td>number</td><td><span class="required">requerido</span> — condición frente al IVA del receptor</td></tr>
+        <tr><td>fecha</td><td>string</td><td><span class="required">requerido</span> — formato YYYYMMDD</td></tr>
+        <tr><td>importeTotal</td><td>number</td><td><span class="required">requerido</span></td></tr>
+        <tr><td>importeNeto</td><td>number</td><td><span class="required">requerido</span></td></tr>
+        <tr><td>importeIva</td><td>number</td><td><span class="optional">opcional</span></td></tr>
+      </table>
+
+      <div class="label">Campos adicionales, obligatorios solo según el tipo de comprobante:</div>
+      <table>
+        <tr><th>Caso</th><th>Campos que se vuelven obligatorios</th></tr>
+        <tr><td>Concepto 2 (Servicios) o 3 (Ambos)</td><td><span class="code-inline">fchServDesde</span>, <span class="code-inline">fchServHasta</span>, <span class="code-inline">fchVtoPago</span> (formato YYYYMMDD)</td></tr>
+        <tr><td>Factura A o M (discriminan IVA)</td><td><span class="code-inline">alicuotasIva</span>: array de <span class="code-inline">{ id, baseImp, importe }</span></td></tr>
+        <tr><td>Nota de Crédito o Nota de Débito (cualquier letra)</td><td><span class="code-inline">comprobantesAsociados</span>: array de <span class="code-inline">{ tipo, puntoVenta, numero }</span></td></tr>
+        <tr><td>Comprobante de Exportación (tipo E)</td><td><span class="code-inline">monedaId</span>, <span class="code-inline">monedaCotizacion</span>, <span class="code-inline">paisDestino</span>, y opcionalmente <span class="code-inline">permisosEmbarque</span></td></tr>
+      </table>
+
+      <div class="label">Ejemplo de request completo — Factura C (la más simple, sin discriminar IVA):</div>
+      <pre><code>POST /wsfe/solicitar-cae HTTP/1.1
+Host: api-arca-wsfe.onrender.com
+Content-Type: application/json
+X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
+
+{
+  "token": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i...",
+  "sign": "Tz9ZH2vQpL8mR3xK1nJ7wA4bC6dE9fG0hI5jK2lM8nO...",
+  "cuit": "20111111112",
+  "puntoVenta": 1,
+  "tipoComprobante": 11,
+  "concepto": 1,
+  "docTipo": 96,
+  "docNro": "12345678",
+  "condicionIvaReceptorId": 5,
+  "fecha": "20260902",
+  "importeTotal": 1210,
+  "importeNeto": 1000
+}</code></pre>
+
+      <div class="label">Respuesta 200 — comprobante aprobado por ARCA:</div>
+      <pre><code>{
+  "exito": true,
+  "cae": "71234567890123",
+  "caeVencimiento": "20260912",
+  "numeroComprobante": 45
+}</code></pre>
+
+      <div class="label">Respuesta 200 con exito:false — ARCA rechazó el comprobante:</div>
+      <pre><code>{
+  "exito": false,
+  "numeroComprobante": 45,
+  "errores": [
+    { "codigo": "10016", "mensaje": "CUIT representado no incluido en Token" }
+  ]
+}</code></pre>
+
+      <div class="label">Respuesta 400 — falta un campo o el body está mal formado:</div>
+      <pre><code>{
+  "exito": false,
+  "errores": [
+    { "codigo": "VALIDACION", "mensaje": "token: Required" },
+    { "codigo": "VALIDACION", "mensaje": "alicuotasIva: Este tipo de comprobante requiere discriminar IVA (alicuotasIva)" }
+  ]
+}</code></pre>
+
+      <div class="label">Respuesta 401 — falta el header o la key es incorrecta:</div>
+      <pre><code>{ "error": "No autorizado" }</code></pre>
+
+      <div class="label">Respuesta 429 — se superó el límite de solicitudes para ese CUIT:</div>
+      <pre><code>{
+  "exito": false,
+  "errores": [
+    { "codigo": "RATE_LIMIT", "mensaje": "Demasiadas solicitudes, intentá de nuevo en un momento" }
+  ]
+}</code></pre>
+
+      <div class="label">Respuesta 500 — error de conexión con ARCA o excepción interna:</div>
+      <pre><code>{
+  "exito": false,
+  "errores": [
+    { "codigo": "ERROR_INTERNO", "mensaje": "descripción del error" }
+  ]
+}</code></pre>
+    </div>
+
+    <!-- ULTIMO COMPROBANTE -->
+    <div class="endpoint">
+      <span class="method get">GET</span><span class="route">/wsfe/ultimo-comprobante</span>
+      <div class="uso"><strong>¿Para qué se usa?</strong> Permite averiguar cuál sería el próximo número de comprobante a emitir para un punto de venta y tipo de comprobante determinados, sin emitir nada todavía. Útil, por ejemplo, para mostrarle al usuario "tu próxima factura va a ser la N° 46" antes de que confirme la operación.</div>
+
+      <div class="label">Headers requeridos:</div>
+      <pre><code>X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+      <div class="label">Query params (todos requeridos):</div>
+      <table>
+        <tr><th>Parámetro</th><th>Tipo</th><th>Detalle</th></tr>
+        <tr><td>token</td><td>string</td><td>Token de WSAA</td></tr>
+        <tr><td>sign</td><td>string</td><td>Sign de WSAA</td></tr>
+        <tr><td>cuit</td><td>string</td><td>CUIT del emisor</td></tr>
+        <tr><td>puntoVenta</td><td>number</td><td>Punto de venta a consultar</td></tr>
+        <tr><td>tipoComprobante</td><td>number</td><td>Código AFIP del tipo de comprobante</td></tr>
+      </table>
+
+      <div class="label">Ejemplo de request completo, con datos de ejemplo (mock):</div>
+      <pre><code>GET /wsfe/ultimo-comprobante?token=PD94bWwgdmVyc2lvbj0iMS4wIi...&sign=Tz9ZH2vQpL8mR3xK1nJ7wA4bC6dE9fG0h...&cuit=20111111112&puntoVenta=1&tipoComprobante=11 HTTP/1.1
+Host: api-arca-wsfe.onrender.com
+X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+      <div class="label">Ejemplo equivalente con curl:</div>
+      <pre><code>curl "https://api-arca-wsfe.onrender.com/wsfe/ultimo-comprobante?token=PD94bWwgdmVyc2lvbj0iMS4wIi...&sign=Tz9ZH2vQpL8mR3xK1nJ7wA4bC6dE9fG0h...&cuit=20111111112&puntoVenta=1&tipoComprobante=11" \
+  -H "X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g"</code></pre>
+
+      <div class="label">Respuesta 200:</div>
+      <pre><code>{
+  "exito": true,
+  "proximoNumero": 46
+}</code></pre>
+
+      <div class="label">Respuesta 400 — faltan parámetros en la query:</div>
+      <pre><code>{
+  "exito": false,
+  "errores": [
+    { "codigo": "VALIDACION", "mensaje": "Faltan parámetros: token, sign, cuit, puntoVenta, tipoComprobante" }
+  ]
+}</code></pre>
+    </div>
+
+    <!-- ADMIN RESET -->
+    <div class="endpoint">
+      <span class="method post">POST</span><span class="route">/admin/reset-soap-client</span>
+      <div class="uso"><strong>¿Para qué se usa?</strong> Es un endpoint de mantenimiento, no de negocio. Fuerza a la API a descartar la conexión SOAP que tiene cacheada contra ARCA y a reconstruirla en la próxima llamada (vuelve a descargar el WSDL). Se usa si la conexión con ARCA queda en un estado raro y no se quiere reiniciar todo el servidor.</div>
+
+      <div class="label">Headers requeridos:</div>
+      <pre><code>X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+      <div class="label">Body:</div>
+      <pre><code>(no requiere body)</code></pre>
+
+      <div class="label">Ejemplo de request:</div>
+      <pre><code>POST /admin/reset-soap-client HTTP/1.1
+Host: api-arca-wsfe.onrender.com
+X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+
+      <div class="label">Respuesta 200:</div>
+      <pre><code>{
+  "exito": true,
+  "mensaje": "Cliente SOAP reiniciado"
+}</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tabla de tipos de comprobante (códigos definidos por ARCA/AFIP)</h2>
+    <table>
+      <tr><th>Código</th><th>Comprobante</th><th>Letra</th><th>Discrimina IVA</th><th>Notas</th></tr>
+      <tr><td>1</td><td>Factura</td><td>A</td><td>Sí</td><td></td></tr>
+      <tr><td>2</td><td>Nota de Débito</td><td>A</td><td>Sí</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>3</td><td>Nota de Crédito</td><td>A</td><td>Sí</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>6</td><td>Factura</td><td>B</td><td>No</td><td></td></tr>
+      <tr><td>7</td><td>Nota de Débito</td><td>B</td><td>No</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>8</td><td>Nota de Crédito</td><td>B</td><td>No</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>11</td><td>Factura</td><td>C</td><td>No</td><td></td></tr>
+      <tr><td>12</td><td>Nota de Débito</td><td>C</td><td>No</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>13</td><td>Nota de Crédito</td><td>C</td><td>No</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>19</td><td>Factura</td><td>E</td><td>No</td><td>exportación</td></tr>
+      <tr><td>20</td><td>Nota de Débito</td><td>E</td><td>No</td><td>exportación</td></tr>
+      <tr><td>21</td><td>Nota de Crédito</td><td>E</td><td>No</td><td>exportación</td></tr>
+      <tr><td>51</td><td>Factura</td><td>M</td><td>Sí</td><td></td></tr>
+      <tr><td>52</td><td>Nota de Débito</td><td>M</td><td>Sí</td><td>requiere comprobantesAsociados</td></tr>
+      <tr><td>53</td><td>Nota de Crédito</td><td>M</td><td>Sí</td><td>requiere comprobantesAsociados</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Tipos de documento del receptor (docTipo) más comunes</h2>
+    <table>
+      <tr><th>Código</th><th>Documento</th></tr>
+      <tr><td>80</td><td>CUIT</td></tr>
+      <tr><td>86</td><td>CUIL</td></tr>
+      <tr><td>96</td><td>DNI</td></tr>
+      <tr><td>99</td><td>Consumidor Final / sin identificar</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Códigos de error propios de esta API</h2>
+    <table>
+      <tr><th>Código</th><th>HTTP</th><th>Significado</th></tr>
+      <tr><td>VALIDACION</td><td>400</td><td>Falta un campo o el body/query no cumple el formato esperado</td></tr>
+      <tr><td>RATE_LIMIT</td><td>429</td><td>Se superó el límite de solicitudes permitidas para ese CUIT en la ventana de tiempo configurada</td></tr>
+      <tr><td>NOT_FOUND</td><td>404</td><td>La ruta solicitada no existe en esta API</td></tr>
+      <tr><td>ERROR_INTERNO</td><td>500</td><td>Error de conexión con ARCA, timeout, o excepción no controlada</td></tr>
+    </table>
+    <p class="desc">Cuando ARCA rechaza un comprobante (no es un error de esta API, sino un rechazo real), el código y mensaje que aparecen en <span class="code-inline">errores</span> son los que devuelve ARCA tal cual, ya que dependen de la causa puntual del rechazo.</p>
+  </section>
+
+  <footer>
+    Documentación técnica completa en el <a href="https://github.com/Maximiliano-A-P/API_ARCA_WSFE" target="_blank">repositorio de GitHub</a>
+  </footer>
+
+</div>
+</body>
+</html>

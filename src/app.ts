@@ -1,15 +1,18 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { wsfeConfig } from './config/wsfe.config';
 import wsfeRoutes from './routes/wsfe.routes';
+import adminRoutes from './routes/admin.routes';
 import { notFoundMiddleware } from './middlewares/notFound.middleware';
 import { errorHandlerMiddleware } from './middlewares/errorHandler.middleware';
-import adminRoutes from './routes/admin.routes';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/wsfe', wsfeRoutes);
 app.use('/admin', adminRoutes);

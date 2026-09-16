@@ -303,6 +303,79 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
   </section>
 
   <section>
+    <h2>Ejemplo de uso en Laravel</h2>
+    <p class="desc">
+      Esta API es agnóstica del lenguaje que la consuma — solo espera JSON
+      por HTTP. A modo de referencia, así se ve un consumo típico desde una
+      aplicación Laravel/PHP, usando el cliente HTTP que trae el framework
+      (<span class="code-inline">Illuminate\Support\Facades\Http</span>).
+      Los valores de este ejemplo son datos de prueba (mock), no
+      corresponden a ninguna cuenta real.
+    </p>
+
+    <div class="label">1. Enviar la solicitud de CAE:</div>
+    <pre><code>use Illuminate\Support\Facades\Http;
+
+$respuesta = Http::withHeaders([
+    'X-Internal-Api-Key' => 'eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g',
+])
+    ->timeout(30)
+    ->post('https://api-arca-wsfe.onrender.com/wsfe/solicitar-cae', [
+        'token' => 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i...',
+        'sign' => 'Tz9ZH2vQpL8mR3xK1nJ7wA4bC6dE9fG0hI5jK2lM8nO...',
+        'cuit' => '20111111112',
+
+        'puntoVenta' => 1,
+        'tipoComprobante' => 11,
+        'concepto' => 1,
+
+        'docTipo' => 96,
+        'docNro' => '12345678',
+        'condicionIvaReceptorId' => 5,
+
+        'fecha' => '20260902',
+        'importeNeto' => 1000,
+        'importeTotal' => 1210,
+    ]);</code></pre>
+
+    <div class="label">2. Tomar y procesar la respuesta:</div>
+    <pre><code>$datos = $respuesta->json();
+
+// $datos es un array asociativo de PHP:
+// [
+//     'exito' => true,
+//     'cae' => '71234567890123',
+//     'caeVencimiento' => '20260912',
+//     'numeroComprobante' => 45,
+// ]
+
+if ($respuesta->successful() && ($datos['exito'] ?? false)) {
+
+    $cae = $datos['cae'];
+    $caeVencimiento = $datos['caeVencimiento'];
+    $numeroComprobante = $datos['numeroComprobante'];
+
+    // Guardar estos valores en el registro correspondiente
+
+} else {
+
+    // Manejar el rechazo o error, revisando $datos['errores']
+
+}</code></pre>
+
+    <p class="desc">
+      La llamada es síncrona: <span class="code-inline">Http::post(...)</span>
+      espera la respuesta antes de continuar, así que no hace falta ninguna
+      ruta ni webhook propio para recibirla — a diferencia de un pago con
+      Mercado Pago, acá no hay nadie "tocando el timbre" desde afuera.
+      <span class="code-inline">successful()</span> confirma que la llamada
+      HTTP en sí no falló (401, 500, timeout), y es un chequeo independiente
+      del campo <span class="code-inline">exito</span> del JSON, que indica
+      si ARCA aprobó o rechazó el comprobante.
+    </p>
+  </section>
+
+  <section>
     <h2>Tabla de tipos de comprobante (códigos definidos por ARCA/AFIP)</h2>
     <table>
       <tr><th>Código</th><th>Comprobante</th><th>Letra</th><th>Discrimina IVA</th><th>Notas</th></tr>

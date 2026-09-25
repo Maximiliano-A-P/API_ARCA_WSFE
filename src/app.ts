@@ -14,6 +14,14 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+app.use((req, _res, next) => {
+  console.log(
+    `[HTTP] ${req.method} ${req.originalUrl}`
+  );
+
+  next();
+});
+
 app.use('/wsfe', wsfeRoutes);
 app.use('/admin', adminRoutes);
 

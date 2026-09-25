@@ -25,9 +25,16 @@ export function rateLimitPorCuit(req: Request, res: Response, next: NextFunction
   }
 
   if (registro.cantidad >= wsfeConfig.rateLimitMaxRequests) {
+    console.warn(
+      `[RATE LIMIT] CUIT ${cuit} excedió el límite`
+    );
+
     return res.status(429).json({
       exito: false,
-      errores: [{ codigo: 'RATE_LIMIT', mensaje: 'Demasiadas solicitudes, intentá de nuevo en un momento' }],
+      errores: [{
+        codigo: 'RATE_LIMIT',
+        mensaje: 'Demasiadas solicitudes, intentá de nuevo en un momento',
+      }],
     });
   }
 

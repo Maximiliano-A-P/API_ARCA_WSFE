@@ -355,7 +355,6 @@
 
   <div class="flow">
 
-```
 <div class="flow-item">
   <span class="flow-number">1.</span>
   La aplicación obtiene un certificado digital autorizado.
@@ -391,7 +390,6 @@
   <span class="flow-number">7.</span>
   ARCA responde con un CAE o con los errores correspondientes.
 </div>
-```
 
   </div>
 
@@ -408,7 +406,6 @@
 
   <table>
 
-```
 <tr>
   <th>Requisito</th>
   <th>Descripción</th>
@@ -448,7 +445,6 @@
     Punto de venta habilitado para facturación electrónica.
   </td>
 </tr>
-```
 
   </table>
 
@@ -526,7 +522,6 @@
 
   <div class="endpoint">
 
-```
 <div>
   <span class="method get">GET</span>
   <span class="route">/health</span>
@@ -535,25 +530,20 @@
 <div class="label">Request:</div>
 
 <pre><code>GET /health HTTP/1.1
-```
 
 Host: api-arca-wsfe.onrender.com</code></pre>
 
-```
 <div class="label">Respuesta:</div>
 
 <pre><code>{
-```
 
 "status": "ok"
 }</code></pre>
 
-```
 <p>
   Si esta respuesta no se obtiene, primero se debe comprobar
   la disponibilidad de la API antes de revisar los datos del comprobante.
 </p>
-```
 
   </div>
 
@@ -565,7 +555,6 @@ Host: api-arca-wsfe.onrender.com</code></pre>
 
   <div class="endpoint">
 
-```
 <div>
   <span class="method post">POST</span>
   <span class="route">/wsfe/solicitar-cae</span>
@@ -585,11 +574,9 @@ Host: api-arca-wsfe.onrender.com</code></pre>
 <h3>Headers</h3>
 
 <pre><code>Content-Type: application/json
-```
 
 X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
 
-```
 <h3>Campos del body</h3>
 
 <table>
@@ -861,7 +848,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
 <h3>Ejemplo completo: Factura C</h3>
 
 <pre><code>POST /wsfe/solicitar-cae HTTP/1.1
-```
 
 Host: api-arca-wsfe.onrender.com
 Content-Type: application/json
@@ -891,11 +877,9 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 "importeTotal": 12000
 }</code></pre>
 
-```
 <h3>Respuesta aprobada</h3>
 
 <pre><code>HTTP/1.1 200 OK
-```
 
 {
 "exito": true,
@@ -904,7 +888,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 "numeroComprobante": 2
 }</code></pre>
 
-```
 <p>
   Cuando <span class="code-inline">exito</span> es true,
   el comprobante fue aprobado y la respuesta incluye:
@@ -951,7 +934,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 <h3>Respuesta con rechazo</h3>
 
 <pre><code>HTTP/1.1 200 OK
-```
 
 {
 "exito": false,
@@ -964,13 +946,11 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 ]
 }</code></pre>
 
-```
 <div class="note">
   Un HTTP 200 indica que la API procesó la solicitud.
   Para saber si ARCA aprobó el comprobante hay que comprobar
   el valor de <span class="code-inline">exito</span>.
 </div>
-```
 
   </div>
 
@@ -982,7 +962,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 
   <div class="endpoint">
 
-```
 <div>
   <span class="method get">GET</span>
   <span class="route">/wsfe/ultimo-comprobante</span>
@@ -1059,27 +1038,22 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 <h3>Ejemplo</h3>
 
 <pre><code>GET /wsfe/ultimo-comprobante?token=TOKEN&amp;sign=SIGN&amp;cuit=20111111112&amp;puntoVenta=1&amp;tipoComprobante=11 HTTP/1.1
-```
 
 Host: api-arca-wsfe.onrender.com
 X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
 
-```
 <h3>Respuesta</h3>
 
 <pre><code>{
-```
 
 "exito": true,
 "proximoNumero": 46
 }</code></pre>
 
-```
 <div class="note">
   Si ARCA informa que el último comprobante autorizado es el 45,
   la API devuelve 46.
 </div>
-```
 
   </div>
 
@@ -1095,7 +1069,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
 
   <table>
 
-```
 <tr>
   <th>Situación</th>
   <th>reintentoAutomatico</th>
@@ -1119,7 +1092,6 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
   <td>true</td>
   <td>Sí</td>
 </tr>
-```
 
   </table>
 
@@ -1193,7 +1165,6 @@ Retry-After: 120
 
   <table>
 
-```
 <tr>
   <th>HTTP</th>
   <th>Significado</th>
@@ -1269,7 +1240,6 @@ Retry-After: 120
     Registrar el error y evaluar reintento.
   </td>
 </tr>
-```
 
   </table>
 
@@ -1297,7 +1267,6 @@ HTTP 200 + exito false
 
   <table>
 
-```
 <tr>
   <th>Código</th>
   <th>Comprobante</th>
@@ -1425,7 +1394,6 @@ HTTP 200 + exito false
   <td>Sí</td>
   <td>Requiere comprobantes asociados.</td>
 </tr>
-```
 
   </table>
 
@@ -1437,7 +1405,6 @@ HTTP 200 + exito false
 
   <table>
 
-```
 <tr>
   <th>Código</th>
   <th>Documento</th>
@@ -1462,7 +1429,6 @@ HTTP 200 + exito false
   <td>99</td>
   <td>Consumidor Final / sin identificar</td>
 </tr>
-```
 
   </table>
 
@@ -1474,7 +1440,6 @@ HTTP 200 + exito false
 
   <table>
 
-```
 <tr>
   <th>Código</th>
   <th>Descripción</th>
@@ -1529,7 +1494,6 @@ HTTP 200 + exito false
   <td>15</td>
   <td>IVA No Alcanzado</td>
 </tr>
-```
 
   </table>
 
@@ -1556,7 +1520,6 @@ HTTP 200 + exito false
 
   <table>
 
-```
 <tr>
   <th>ID</th>
   <th>Alícuota</th>
@@ -1591,7 +1554,6 @@ HTTP 200 + exito false
   <td>9</td>
   <td>2,5%</td>
 </tr>
-```
 
   </table>
 
@@ -1605,7 +1567,6 @@ HTTP 200 + exito false
 
   <table>
 
-```
 <tr>
   <th>Código</th>
   <th>HTTP</th>
@@ -1644,7 +1605,6 @@ HTTP 200 + exito false
     Endpoint inexistente.
   </td>
 </tr>
-```
 
   </table>
 
@@ -1832,7 +1792,6 @@ if (
 
   <div class="flow">
 
-```
 <div class="flow-item">
   <span class="flow-number">1.</span>
   Obtener credenciales Token y Sign mediante WSAA.
@@ -1875,7 +1834,6 @@ if (
   utilizar reintentoAutomatico=true y respetar Retry-After
   cuando exista una respuesta 429.
 </div>
-```
 
   </div>
 
@@ -1926,9 +1884,7 @@ rel="noopener noreferrer"
 
 >
 
-```
 Repositorio de GitHub
-```
 
   </a>
 

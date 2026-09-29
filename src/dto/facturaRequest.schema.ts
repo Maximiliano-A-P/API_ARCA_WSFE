@@ -207,6 +207,145 @@ export const facturaRequestSchema =
           + 'paisDestino',
       });
     }
+
+    /*
+    * Coherencia de importes para comprobantes que manejan IVA: A, B y M.
+    */
+    if (
+      discriminaIva(data.tipoComprobante)
+    ) {
+
+      if (
+        data.importeIva === undefined
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['importeIva'],
+          message:
+            'Los comprobantes A, B y M requieren importeIva.',
+        });
+      }
+
+      const iva =
+        data.importeIva ?? 0;
+
+      const totalEsperado =
+        Math.round(
+          (
+            data.importeNeto
+            + iva
+          ) * 100
+        ) / 100;
+
+      const diferencia =
+        Math.abs(
+          data.importeTotal
+          - totalEsperado
+        );
+
+      if (diferencia > 0.01) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['importeTotal'],
+          message:
+            'Para este tipo de comprobante, importeTotal debe ser igual a importeNeto + importeIva.',
+        });
+      }
+
+      /*
+      * Si hay IVA informado, su detalle también debe coincidir con importeIva.
+      */
+      if (
+        iva > 0
+        && !data.alicuotasIva?.length
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['alicuotasIva'],
+          message:
+            'Cuando importeIva es mayor que 0 debe informarse alicuotasIva.',
+        });
+      }
+
+      if (
+        data.alicuotasIva?.length
+      ) {
+
+        const sumaIva =
+          data.alicuotasIva.reduce(
+            (suma, item) =>
+              suma + item.importe,
+            0
+          );
+
+        const diferenciaIva =
+          Math.abs(
+            sumaIva - iva
+          );
+
+        if (
+          diferenciaIva > 0.01
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['alicuotasIva'],
+            message:
+              'La suma de los importes de alicuotasIva debe coincidir con importeIva.',
+          });
+        }
+      }
+    }
+
+    /*
+    * Factura C:
+    *
+    * ImpIVA = 0
+    * no se informa IVA
+    * ImpTotal = ImpNeto + ImpTrib
+    *
+    * Esta API no recibe ImpTrib, por lo que ImpTotal debe ser igual a ImpNeto.
+    */
+    if (
+      [11, 12, 13]
+        .includes(data.tipoComprobante)
+    ) {
+
+      if (
+        (data.importeIva ?? 0) !== 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['importeIva'],
+          message:
+            'Los comprobantes C deben informar importeIva igual a 0.',
+        });
+      }
+
+      if (
+        data.alicuotasIva?.length
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['alicuotasIva'],
+          message:
+            'Los comprobantes C no deben informar alicuotasIva.',
+        });
+      }
+
+      if (
+        Math.abs(
+          data.importeTotal
+          - data.importeNeto
+        ) > 0.01
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['importeTotal'],
+          message:
+            'Para comprobantes C, importeTotal debe coincidir con importeNeto.',
+        });
+      }
+    }
   });
 
 export type FacturaRequest =

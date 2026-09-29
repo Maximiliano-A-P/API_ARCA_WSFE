@@ -32,7 +32,12 @@ export function esNotaCreditoODebito(tipo: number): boolean {
 
 export function discriminaIva(tipo: number): boolean {
   const letra = LETRA_POR_TIPO[tipo];
-  return letra === 'A' || letra === 'M';
+
+  return (
+    letra === 'A'
+    || letra === 'B'
+    || letra === 'M'
+  );
 }
 
 export function esExportacion(tipo: number): boolean {

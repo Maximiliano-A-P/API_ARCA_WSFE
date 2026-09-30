@@ -306,15 +306,32 @@
     mediante el Web Service WSFE de ARCA.
   </p>
 
-<span class="badge">Servicio activo</span>
-
+  <span class="badge">Servicio activo</span>
 </header>
 
 <div class="toc">
   <strong>Contenido</strong>
 
-<a href="#descripcion">1. ¿Qué hace esta API?</a> <a href="#arquitectura">2. ¿Cómo funciona?</a> <a href="#requisitos">3. Requisitos previos</a> <a href="#base-url">4. URL base</a> <a href="#autenticacion">5. Autenticación</a> <a href="#quickstart">6. Primera prueba</a> <a href="#solicitar-cae">7. Solicitar CAE</a> <a href="#ultimo-comprobante">8. Consultar próximo número</a> <a href="#reintentos">9. Emisión inicial y reintentos</a> <a href="#respuestas">10. Respuestas HTTP</a> <a href="#tipos-comprobante">11. Tipos de comprobante</a> <a href="#documentos">12. Tipos de documento</a> <a href="#iva">13. Condición frente al IVA</a> <a href="#alicuotas">14. Alícuotas de IVA</a> <a href="#errores">15. Errores</a> <a href="#seguridad">16. Seguridad</a> <a href="#ejemplos">17. Ejemplos de integración</a> <a href="#flujo-completo">18. Flujo completo recomendado</a> <a href="#oficial">19. Documentación oficial</a>
-
+  <a href="#descripcion">1. ¿Qué hace esta API?</a>
+  <a href="#arquitectura">2. ¿Cómo funciona?</a>
+  <a href="#requisitos">3. Requisitos previos</a>
+  <a href="#base-url">4. URL base</a>
+  <a href="#autenticacion">5. Autenticación</a>
+  <a href="#quickstart">6. Primera prueba</a>
+  <a href="#solicitar-cae">7. Solicitar CAE</a>
+  <a href="#importes-por-tipo">8. Reglas de importes según el tipo de comprobante</a>
+  <a href="#ultimo-comprobante">9. Consultar próximo número</a>
+  <a href="#reintentos">10. Emisión inicial y reintentos</a>
+  <a href="#respuestas">11. Respuestas HTTP</a>
+  <a href="#tipos-comprobante">12. Tipos de comprobante</a>
+  <a href="#documentos">13. Tipos de documento</a>
+  <a href="#iva">14. Condición frente al IVA</a>
+  <a href="#alicuotas">15. Alícuotas de IVA</a>
+  <a href="#errores">16. Errores</a>
+  <a href="#seguridad">17. Seguridad</a>
+  <a href="#ejemplos">18. Ejemplos de integración</a>
+  <a href="#flujo-completo">19. Flujo completo recomendado</a>
+  <a href="#oficial">20. Documentación oficial</a>
 </div>
 
 <section id="descripcion">
@@ -355,41 +372,41 @@
 
   <div class="flow">
 
-<div class="flow-item">
-  <span class="flow-number">1.</span>
-  La aplicación obtiene un certificado digital autorizado.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">1.</span>
+      La aplicación obtiene un certificado digital autorizado.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">2.</span>
-  Utiliza WSAA para obtener un Ticket de Acceso.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">2.</span>
+      Utiliza WSAA para obtener un Ticket de Acceso.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">3.</span>
-  WSAA devuelve Token y Sign.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">3.</span>
+      WSAA devuelve Token y Sign.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">4.</span>
-  La aplicación envía Token, Sign y los datos del comprobante
-  a esta API.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">4.</span>
+      La aplicación envía Token, Sign y los datos del comprobante
+      a esta API.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">5.</span>
-  La API consulta ante ARCA el último comprobante autorizado.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">5.</span>
+      La API consulta ante ARCA el último comprobante autorizado.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">6.</span>
-  La API utiliza el siguiente número y envía la solicitud a WSFE.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">6.</span>
+      La API utiliza el siguiente número y envía la solicitud a WSFE.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">7.</span>
-  ARCA responde con un CAE o con los errores correspondientes.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">7.</span>
+      ARCA responde con un CAE o con los errores correspondientes.
+    </div>
 
   </div>
 
@@ -406,45 +423,45 @@
 
   <table>
 
-<tr>
-  <th>Requisito</th>
-  <th>Descripción</th>
-</tr>
+    <tr>
+      <th>Requisito</th>
+      <th>Descripción</th>
+    </tr>
 
-<tr>
-  <td>Certificado digital</td>
-  <td>
-    Certificado autorizado para utilizar el Web Service correspondiente.
-  </td>
-</tr>
+    <tr>
+      <td>Certificado digital</td>
+      <td>
+        Certificado autorizado para utilizar el Web Service correspondiente.
+      </td>
+    </tr>
 
-<tr>
-  <td>WSAA</td>
-  <td>
-    Acceso al servicio de autenticación de ARCA.
-  </td>
-</tr>
+    <tr>
+      <td>WSAA</td>
+      <td>
+        Acceso al servicio de autenticación de ARCA.
+      </td>
+    </tr>
 
-<tr>
-  <td>Token y Sign</td>
-  <td>
-    Credenciales temporales generadas mediante WSAA.
-  </td>
-</tr>
+    <tr>
+      <td>Token y Sign</td>
+      <td>
+        Credenciales temporales generadas mediante WSAA.
+      </td>
+    </tr>
 
-<tr>
-  <td>CUIT emisora</td>
-  <td>
-    CUIT de la entidad que emite los comprobantes.
-  </td>
-</tr>
+    <tr>
+      <td>CUIT emisora</td>
+      <td>
+        CUIT de la entidad que emite los comprobantes.
+      </td>
+    </tr>
 
-<tr>
-  <td>Punto de venta</td>
-  <td>
-    Punto de venta habilitado para facturación electrónica.
-  </td>
-</tr>
+    <tr>
+      <td>Punto de venta</td>
+      <td>
+        Punto de venta habilitado para facturación electrónica.
+      </td>
+    </tr>
 
   </table>
 
@@ -522,28 +539,28 @@
 
   <div class="endpoint">
 
-<div>
-  <span class="method get">GET</span>
-  <span class="route">/health</span>
-</div>
+    <div>
+      <span class="method get">GET</span>
+      <span class="route">/health</span>
+    </div>
 
-<div class="label">Request:</div>
+    <div class="label">Request:</div>
 
-<pre><code>GET /health HTTP/1.1
+    <pre><code>GET /health HTTP/1.1
 
 Host: api-arca-wsfe.onrender.com</code></pre>
 
-<div class="label">Respuesta:</div>
+    <div class="label">Respuesta:</div>
 
-<pre><code>{
+    <pre><code>{
 
 "status": "ok"
 }</code></pre>
 
-<p>
-  Si esta respuesta no se obtiene, primero se debe comprobar
-  la disponibilidad de la API antes de revisar los datos del comprobante.
-</p>
+    <p>
+      Si esta respuesta no se obtiene, primero se debe comprobar
+      la disponibilidad de la API antes de revisar los datos del comprobante.
+    </p>
 
   </div>
 
@@ -555,299 +572,299 @@ Host: api-arca-wsfe.onrender.com</code></pre>
 
   <div class="endpoint">
 
-<div>
-  <span class="method post">POST</span>
-  <span class="route">/wsfe/solicitar-cae</span>
-</div>
+    <div>
+      <span class="method post">POST</span>
+      <span class="route">/wsfe/solicitar-cae</span>
+    </div>
 
-<p>
-  Solicita a ARCA la autorización de una factura, nota de crédito
-  o nota de débito.
-</p>
+    <p>
+      Solicita a ARCA la autorización de una factura, nota de crédito
+      o nota de débito.
+    </p>
 
-<div class="note">
-  La API obtiene internamente el siguiente número de comprobante
-  disponible para el punto de venta y tipo de comprobante enviados.
-</div>
+    <div class="note">
+      La API obtiene internamente el siguiente número de comprobante
+      disponible para el punto de venta y tipo de comprobante enviados.
+    </div>
 
 
-<h3>Headers</h3>
+    <h3>Headers</h3>
 
-<pre><code>Content-Type: application/json
+    <pre><code>Content-Type: application/json
 
 X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
 
-<h3>Campos del body</h3>
+    <h3>Campos del body</h3>
 
-<table>
+    <table>
 
-  <tr>
-    <th>Campo</th>
-    <th>Tipo</th>
-    <th>Estado</th>
-    <th>Descripción</th>
-  </tr>
+      <tr>
+        <th>Campo</th>
+        <th>Tipo</th>
+        <th>Estado</th>
+        <th>Descripción</th>
+      </tr>
 
-  <tr>
-    <td>invoiceId</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Identificador interno de la factura en el sistema consumidor.
-      No es el número fiscal de ARCA.
-    </td>
-  </tr>
+      <tr>
+        <td>invoiceId</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Identificador interno de la factura en el sistema consumidor.
+          No es el número fiscal de ARCA.
+        </td>
+      </tr>
 
-  <tr>
-    <td>reintentoAutomatico</td>
-    <td>boolean</td>
-    <td class="optional">opcional</td>
-    <td>
-      Indica si la solicitud pertenece a un reintento automático.
-      El valor predeterminado es false.
-    </td>
-  </tr>
+      <tr>
+        <td>reintentoAutomatico</td>
+        <td>boolean</td>
+        <td class="optional">opcional</td>
+        <td>
+          Indica si la solicitud pertenece a un reintento automático.
+          El valor predeterminado es false.
+        </td>
+      </tr>
 
-  <tr>
-    <td>token</td>
-    <td>string</td>
-    <td class="required">requerido</td>
-    <td>
-      Token obtenido mediante WSAA.
-    </td>
-  </tr>
+      <tr>
+        <td>token</td>
+        <td>string</td>
+        <td class="required">requerido</td>
+        <td>
+          Token obtenido mediante WSAA.
+        </td>
+      </tr>
 
-  <tr>
-    <td>sign</td>
-    <td>string</td>
-    <td class="required">requerido</td>
-    <td>
-      Sign obtenido mediante WSAA.
-    </td>
-  </tr>
+      <tr>
+        <td>sign</td>
+        <td>string</td>
+        <td class="required">requerido</td>
+        <td>
+          Sign obtenido mediante WSAA.
+        </td>
+      </tr>
 
-  <tr>
-    <td>cuit</td>
-    <td>string</td>
-    <td class="required">requerido</td>
-    <td>
-      CUIT del emisor.
-    </td>
-  </tr>
+      <tr>
+        <td>cuit</td>
+        <td>string</td>
+        <td class="required">requerido</td>
+        <td>
+          CUIT del emisor.
+        </td>
+      </tr>
 
-  <tr>
-    <td>puntoVenta</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Punto de venta habilitado.
-    </td>
-  </tr>
+      <tr>
+        <td>puntoVenta</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Punto de venta habilitado.
+        </td>
+      </tr>
 
-  <tr>
-    <td>tipoComprobante</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Código ARCA/AFIP del comprobante.
-    </td>
-  </tr>
+      <tr>
+        <td>tipoComprobante</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Código ARCA/AFIP del comprobante.
+        </td>
+      </tr>
 
-  <tr>
-    <td>concepto</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      1 = productos, 2 = servicios, 3 = productos y servicios.
-    </td>
-  </tr>
+      <tr>
+        <td>concepto</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          1 = productos, 2 = servicios, 3 = productos y servicios.
+        </td>
+      </tr>
 
-  <tr>
-    <td>docTipo</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Tipo de documento del receptor.
-    </td>
-  </tr>
+      <tr>
+        <td>docTipo</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Tipo de documento del receptor.
+        </td>
+      </tr>
 
-  <tr>
-    <td>docNro</td>
-    <td>string</td>
-    <td class="required">requerido</td>
-    <td>
-      Número del documento del receptor.
-    </td>
-  </tr>
+      <tr>
+        <td>docNro</td>
+        <td>string</td>
+        <td class="required">requerido</td>
+        <td>
+          Número del documento del receptor.
+        </td>
+      </tr>
 
-  <tr>
-    <td>condicionIvaReceptorId</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Condición frente al IVA del receptor.
-    </td>
-  </tr>
+      <tr>
+        <td>condicionIvaReceptorId</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Condición frente al IVA del receptor.
+        </td>
+      </tr>
 
-  <tr>
-    <td>fecha</td>
-    <td>string</td>
-    <td class="required">requerido</td>
-    <td>
-      Formato YYYYMMDD.
-    </td>
-  </tr>
+      <tr>
+        <td>fecha</td>
+        <td>string</td>
+        <td class="required">requerido</td>
+        <td>
+          Formato YYYYMMDD.
+        </td>
+      </tr>
 
-  <tr>
-    <td>importeTotal</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Importe total del comprobante.
-    </td>
-  </tr>
+      <tr>
+        <td>importeTotal</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Importe total del comprobante.
+        </td>
+      </tr>
 
-  <tr>
-    <td>importeNeto</td>
-    <td>number</td>
-    <td class="required">requerido</td>
-    <td>
-      Importe neto informado.
-    </td>
-  </tr>
+      <tr>
+        <td>importeNeto</td>
+        <td>number</td>
+        <td class="required">requerido</td>
+        <td>
+          Importe neto informado.
+        </td>
+      </tr>
 
-  <tr>
-    <td>importeIva</td>
-    <td>number</td>
-    <td class="optional">opcional</td>
-    <td>
-      Importe de IVA cuando corresponda.
-    </td>
-  </tr>
+      <tr>
+        <td>importeIva</td>
+        <td>number</td>
+        <td class="optional">opcional</td>
+        <td>
+          Importe de IVA cuando corresponda.
+        </td>
+      </tr>
 
-  <tr>
-    <td>alicuotasIva</td>
-    <td>array</td>
-    <td class="optional">condicional</td>
-    <td>
-      Obligatorio cuando el tipo de comprobante discrimina IVA.
-    </td>
-  </tr>
+      <tr>
+        <td>alicuotasIva</td>
+        <td>array</td>
+        <td class="optional">condicional</td>
+        <td>
+          Obligatorio cuando el tipo de comprobante discrimina IVA.
+        </td>
+      </tr>
 
-  <tr>
-    <td>comprobantesAsociados</td>
-    <td>array</td>
-    <td class="optional">condicional</td>
-    <td>
-      Obligatorio en notas de crédito y notas de débito.
-    </td>
-  </tr>
+      <tr>
+        <td>comprobantesAsociados</td>
+        <td>array</td>
+        <td class="optional">condicional</td>
+        <td>
+          Obligatorio en notas de crédito y notas de débito.
+        </td>
+      </tr>
 
-  <tr>
-    <td>fchServDesde</td>
-    <td>string</td>
-    <td class="optional">condicional</td>
-    <td>
-      Inicio del servicio. YYYYMMDD.
-      Obligatorio con concepto 2 o 3.
-    </td>
-  </tr>
+      <tr>
+        <td>fchServDesde</td>
+        <td>string</td>
+        <td class="optional">condicional</td>
+        <td>
+          Inicio del servicio. YYYYMMDD.
+          Obligatorio con concepto 2 o 3.
+        </td>
+      </tr>
 
-  <tr>
-    <td>fchServHasta</td>
-    <td>string</td>
-    <td class="optional">condicional</td>
-    <td>
-      Fin del servicio. YYYYMMDD.
-      Obligatorio con concepto 2 o 3.
-    </td>
-  </tr>
+      <tr>
+        <td>fchServHasta</td>
+        <td>string</td>
+        <td class="optional">condicional</td>
+        <td>
+          Fin del servicio. YYYYMMDD.
+          Obligatorio con concepto 2 o 3.
+        </td>
+      </tr>
 
-  <tr>
-    <td>fchVtoPago</td>
-    <td>string</td>
-    <td class="optional">condicional</td>
-    <td>
-      Vencimiento del pago. YYYYMMDD.
-      Obligatorio con concepto 2 o 3.
-    </td>
-  </tr>
+      <tr>
+        <td>fchVtoPago</td>
+        <td>string</td>
+        <td class="optional">condicional</td>
+        <td>
+          Vencimiento del pago. YYYYMMDD.
+          Obligatorio con concepto 2 o 3.
+        </td>
+      </tr>
 
-  <tr>
-    <td>monedaId</td>
-    <td>string</td>
-    <td class="optional">condicional</td>
-    <td>
-      Código de moneda para comprobantes que lo requieren.
-    </td>
-  </tr>
+      <tr>
+        <td>monedaId</td>
+        <td>string</td>
+        <td class="optional">condicional</td>
+        <td>
+          Código de moneda para comprobantes que lo requieren.
+        </td>
+      </tr>
 
-  <tr>
-    <td>monedaCotizacion</td>
-    <td>number</td>
-    <td class="optional">condicional</td>
-    <td>
-      Cotización de la moneda.
-    </td>
-  </tr>
+      <tr>
+        <td>monedaCotizacion</td>
+        <td>number</td>
+        <td class="optional">condicional</td>
+        <td>
+          Cotización de la moneda.
+        </td>
+      </tr>
 
-  <tr>
-    <td>paisDestino</td>
-    <td>number</td>
-    <td class="optional">condicional</td>
-    <td>
-      País de destino para exportación.
-    </td>
-  </tr>
+      <tr>
+        <td>paisDestino</td>
+        <td>number</td>
+        <td class="optional">condicional</td>
+        <td>
+          País de destino para exportación.
+        </td>
+      </tr>
 
-  <tr>
-    <td>permisosEmbarque</td>
-    <td>array</td>
-    <td class="optional">condicional</td>
-    <td>
-      Permisos de embarque para exportación, cuando correspondan.
-    </td>
-  </tr>
+      <tr>
+        <td>permisosEmbarque</td>
+        <td>array</td>
+        <td class="optional">condicional</td>
+        <td>
+          Permisos de embarque para exportación, cuando correspondan.
+        </td>
+      </tr>
 
-</table>
-
-
-<h3>invoiceId</h3>
-
-<p>
-  Es un identificador proporcionado por el sistema que consume la API.
-  Puede ser el ID de una factura de una base de datos, por ejemplo:
-</p>
-
-<pre><code>"invoiceId": 316</code></pre>
-
-<p>
-  No debe confundirse con
-  <span class="code-inline">numeroComprobante</span>.
-  El primero pertenece al sistema consumidor y el segundo es el número
-  fiscal que ARCA asigna al comprobante.
-</p>
+    </table>
 
 
-<h3>reintentoAutomatico</h3>
+    <h3>invoiceId</h3>
 
-<p>
-  Utilizar false o no enviar el campo para:
-</p>
+    <p>
+      Es un identificador proporcionado por el sistema que consume la API.
+      Puede ser el ID de una factura de una base de datos, por ejemplo:
+    </p>
 
-<pre><code>"reintentoAutomatico": false</code></pre>
+    <pre><code>"invoiceId": 316</code></pre>
 
-<p>
-  Utilizar true solamente cuando la petición provenga de un proceso
-  automático de reintentos:
-</p>
+    <p>
+      No debe confundirse con
+      <span class="code-inline">numeroComprobante</span>.
+      El primero pertenece al sistema consumidor y el segundo es el número
+      fiscal que ARCA asigna al comprobante.
+    </p>
 
-<pre><code>"reintentoAutomatico": true</code></pre>
+
+    <h3>reintentoAutomatico</h3>
+
+    <p>
+      Utilizar false o no enviar el campo para:
+    </p>
+
+    <pre><code>"reintentoAutomatico": false</code></pre>
+
+    <p>
+      Utilizar true solamente cuando la petición provenga de un proceso
+      automático de reintentos:
+    </p>
+
+    <pre><code>"reintentoAutomatico": true</code></pre>
 
 
-<h3>Ejemplo completo: Factura C</h3>
+    <h3>Ejemplo completo: Factura C</h3>
 
-<pre><code>POST /wsfe/solicitar-cae HTTP/1.1
+    <pre><code>POST /wsfe/solicitar-cae HTTP/1.1
 
 Host: api-arca-wsfe.onrender.com
 Content-Type: application/json
@@ -877,9 +894,9 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 "importeTotal": 12000
 }</code></pre>
 
-<h3>Respuesta aprobada</h3>
+    <h3>Respuesta aprobada</h3>
 
-<pre><code>HTTP/1.1 200 OK
+    <pre><code>HTTP/1.1 200 OK
 
 {
 "exito": true,
@@ -888,52 +905,52 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 "numeroComprobante": 2
 }</code></pre>
 
-<p>
-  Cuando <span class="code-inline">exito</span> es true,
-  el comprobante fue aprobado y la respuesta incluye:
-</p>
+    <p>
+      Cuando <span class="code-inline">exito</span> es true,
+      el comprobante fue aprobado y la respuesta incluye:
+    </p>
 
-<table>
+    <table>
 
-  <tr>
-    <th>Campo</th>
-    <th>Descripción</th>
-  </tr>
+      <tr>
+        <th>Campo</th>
+        <th>Descripción</th>
+      </tr>
 
-  <tr>
-    <td>cae</td>
-    <td>
-      Código de autorización electrónico.
-    </td>
-  </tr>
+      <tr>
+        <td>cae</td>
+        <td>
+          Código de autorización electrónico.
+        </td>
+      </tr>
 
-  <tr>
-    <td>caeVencimiento</td>
-    <td>
-      Fecha de vencimiento del CAE, en formato YYYYMMDD.
-    </td>
-  </tr>
+      <tr>
+        <td>caeVencimiento</td>
+        <td>
+          Fecha de vencimiento del CAE, en formato YYYYMMDD.
+        </td>
+      </tr>
 
-  <tr>
-    <td>numeroComprobante</td>
-    <td>
-      Número fiscal asignado al comprobante.
-    </td>
-  </tr>
+      <tr>
+        <td>numeroComprobante</td>
+        <td>
+          Número fiscal asignado al comprobante.
+        </td>
+      </tr>
 
-  <tr>
-    <td>observaciones</td>
-    <td>
-      Observaciones informadas por ARCA, si existen.
-    </td>
-  </tr>
+      <tr>
+        <td>observaciones</td>
+        <td>
+          Observaciones informadas por ARCA, si existen.
+        </td>
+      </tr>
 
-</table>
+    </table>
 
 
-<h3>Respuesta con rechazo</h3>
+    <h3>Respuesta con rechazo</h3>
 
-<pre><code>HTTP/1.1 200 OK
+    <pre><code>HTTP/1.1 200 OK
 
 {
 "exito": false,
@@ -946,114 +963,479 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g
 ]
 }</code></pre>
 
-<div class="note">
-  Un HTTP 200 indica que la API procesó la solicitud.
-  Para saber si ARCA aprobó el comprobante hay que comprobar
-  el valor de <span class="code-inline">exito</span>.
-</div>
+    <div class="note">
+      Un HTTP 200 indica que la API procesó la solicitud.
+      Para saber si ARCA aprobó el comprobante hay que comprobar
+      el valor de <span class="code-inline">exito</span>.
+    </div>
 
   </div>
 
 </section>
 
+<section id="importes-por-tipo">
+
+  <h2>8. Reglas de importes según el tipo de comprobante</h2>
+
+  <p>
+    Los campos <span class="code-inline">importeNeto</span>,
+    <span class="code-inline">importeIva</span>,
+    <span class="code-inline">importeTotal</span> y
+    <span class="code-inline">alicuotasIva</span> no se utilizan
+    exactamente de la misma manera en todos los tipos de comprobante.
+  </p>
+
+  <p>
+    Es importante enviar estos valores de acuerdo con las reglas de WSFE.
+    La API no debe recibir el mismo esquema de importes para A, B y C.
+  </p>
+
+  <h3>Factura A</h3>
+
+  <p>
+    La Factura A informa por separado el importe neto gravado y el IVA.
+  </p>
+
+  <table>
+
+    <tr>
+      <th>Campo</th>
+      <th>Qué enviar</th>
+    </tr>
+
+    <tr>
+      <td>importeNeto</td>
+      <td>
+        Importe neto gravado antes del IVA.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeIva</td>
+      <td>
+        Importe total de IVA.
+      </td>
+    </tr>
+
+    <tr>
+      <td>alicuotasIva</td>
+      <td>
+        Detalle de las alícuotas que forman el IVA.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeTotal</td>
+      <td>
+        Neto + IVA + otros componentes que correspondan.
+      </td>
+    </tr>
+
+  </table>
+
+  <p>Ejemplo con IVA del 21 %:</p>
+
+  <pre><code>{
+  "importeNeto": 1000,
+  "importeIva": 210,
+  "importeTotal": 1210,
+  "alicuotasIva": [
+    {
+      "id": 5,
+      "baseImp": 1000,
+      "importe": 210
+    }
+  ]
+}</code></pre>
+
+  <div class="note">
+    La suma de los importes de
+    <span class="code-inline">alicuotasIva</span>
+    debe coincidir con
+    <span class="code-inline">importeIva</span>.
+  </div>
+
+  <h3>Factura B</h3>
+
+  <p>
+    En WSFE, la Factura B también utiliza los campos de IVA.
+    El IVA puede estar incluido en el precio que recibe el cliente,
+    pero si corresponde informar IVA ante WSFE, la API debe recibir
+    el neto, el IVA y el detalle de las alícuotas.
+  </p>
+
+  <table>
+
+    <tr>
+      <th>Campo</th>
+      <th>Qué enviar</th>
+    </tr>
+
+    <tr>
+      <td>importeNeto</td>
+      <td>
+        Importe neto gravado.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeIva</td>
+      <td>
+        Importe total de IVA.
+      </td>
+    </tr>
+
+    <tr>
+      <td>alicuotasIva</td>
+      <td>
+        Detalle de las alícuotas correspondientes.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeTotal</td>
+      <td>
+        Neto + IVA + otros componentes que correspondan.
+      </td>
+    </tr>
+
+  </table>
+
+  <p>Ejemplo con IVA del 21 %:</p>
+
+  <pre><code>{
+  "importeNeto": 1000,
+  "importeIva": 210,
+  "importeTotal": 1210,
+  "alicuotasIva": [
+    {
+      "id": 5,
+      "baseImp": 1000,
+      "importe": 210
+    }
+  ]
+}</code></pre>
+
+  <h3>Factura C</h3>
+
+  <div class="warning">
+    <strong>Factura C tiene una regla diferente.</strong>
+    Para WSFE, el campo <span class="code-inline">ImpIVA</span>
+    debe ser 0 y no debe informarse el detalle de IVA.
+  </div>
+
+  <p>
+    En esta API eso significa:
+  </p>
+
+  <table>
+
+    <tr>
+      <th>Campo</th>
+      <th>Qué enviar</th>
+    </tr>
+
+    <tr>
+      <td>importeNeto</td>
+      <td>
+        Importe del subtotal de la operación.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeIva</td>
+      <td>
+        Debe ser 0.
+      </td>
+    </tr>
+
+    <tr>
+      <td>alicuotasIva</td>
+      <td>
+        No debe informarse.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeTotal</td>
+      <td>
+        Debe coincidir con el subtotal cuando no existen otros tributos.
+      </td>
+    </tr>
+
+  </table>
+
+  <p>
+    Ejemplo:
+  </p>
+
+  <pre><code>{
+  "importeNeto": 17654.63,
+  "importeIva": 0,
+  "importeTotal": 17654.63
+}</code></pre>
+
+  <div class="warning">
+    No enviar una Factura C de esta forma:
+  </div>
+
+  <pre><code>{
+  "importeNeto": 14590.60,
+  "importeIva": 0,
+  "importeTotal": 17654.63
+}</code></pre>
+
+  <p>
+    Ese request sería rechazado porque WSFE exige que, para una Factura C,
+    el importe total coincida con la suma de
+    <span class="code-inline">ImpNeto + ImpTrib</span>.
+  </p>
+
+  <p>
+    En particular, que el sistema consumidor tenga internamente un
+    precio base más un cálculo propio del 21 % no significa que ese
+    21 % deba enviarse como IVA separado en WSFE para una Factura C.
+  </p>
+
+  <h3>Factura M</h3>
+
+  <p>
+    La Factura M utiliza IVA discriminado en WSFE de forma similar
+    a los comprobantes que informan IVA.
+  </p>
+
+  <table>
+
+    <tr>
+      <th>Campo</th>
+      <th>Qué enviar</th>
+    </tr>
+
+    <tr>
+      <td>importeNeto</td>
+      <td>
+        Importe neto gravado.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeIva</td>
+      <td>
+        Importe total de IVA.
+      </td>
+    </tr>
+
+    <tr>
+      <td>alicuotasIva</td>
+      <td>
+        Detalle de las alícuotas.
+      </td>
+    </tr>
+
+    <tr>
+      <td>importeTotal</td>
+      <td>
+        Neto + IVA + otros componentes que correspondan.
+      </td>
+    </tr>
+
+  </table>
+
+  <h3>Factura E</h3>
+
+  <div class="danger">
+    <strong>Los comprobantes E no se procesan mediante esta API.</strong>
+    WSFEV1 de ARCA no es el Web Service correspondiente a los
+    comprobantes de exportación.
+  </div>
+
+  <p>
+    Si se envía:
+  </p>
+
+  <pre><code>"tipoComprobante": 19</code></pre>
+
+  <p>
+    la API devuelve:
+  </p>
+
+  <pre><code>HTTP 400
+
+{
+  "exito": false,
+  "errores": [
+    {
+      "codigo": "COMPROBANTE_NO_SOPORTADO",
+      "mensaje": "Los comprobantes E no se procesan mediante WSFEV1. ARCA utiliza WSFEXV1 para comprobantes de exportación."
+    }
+  ]
+}</code></pre>
+
+  <p>
+    Lo mismo se aplica a los tipos 20 y 21.
+  </p>
+
+  <h3>Resumen</h3>
+
+  <table>
+
+    <tr>
+      <th>Tipo</th>
+      <th>importeNeto</th>
+      <th>importeIva</th>
+      <th>alicuotasIva</th>
+      <th>importeTotal</th>
+    </tr>
+
+    <tr>
+      <td>A</td>
+      <td>Neto gravado</td>
+      <td>IVA</td>
+      <td>Sí, cuando corresponde</td>
+      <td>Neto + IVA + otros</td>
+    </tr>
+
+    <tr>
+      <td>B</td>
+      <td>Neto gravado</td>
+      <td>IVA</td>
+      <td>Sí, cuando corresponde</td>
+      <td>Neto + IVA + otros</td>
+    </tr>
+
+    <tr>
+      <td>C</td>
+      <td>Subtotal</td>
+      <td>0</td>
+      <td>No</td>
+      <td>Subtotal + otros</td>
+    </tr>
+
+    <tr>
+      <td>M</td>
+      <td>Neto gravado</td>
+      <td>IVA</td>
+      <td>Sí, cuando corresponde</td>
+      <td>Neto + IVA + otros</td>
+    </tr>
+
+    <tr>
+      <td>E</td>
+      <td colspan="4">
+        No soportada por esta API. Requiere WSFEXV1.
+      </td>
+    </tr>
+
+  </table>
+
+  <div class="note">
+    La API valida la coherencia entre estos campos antes de solicitar
+    la autorización a ARCA. Si los importes no son compatibles con el
+    tipo de comprobante, la solicitud debe corregirse antes de volver
+    a intentar la emisión.
+  </div>
+
+</section>
+
+
 <section id="ultimo-comprobante">
 
-  <h2>8. Consultar próximo número</h2>
+  <h2>9. Consultar próximo número</h2>
 
   <div class="endpoint">
 
-<div>
-  <span class="method get">GET</span>
-  <span class="route">/wsfe/ultimo-comprobante</span>
-</div>
+    <div>
+      <span class="method get">GET</span>
+      <span class="route">/wsfe/ultimo-comprobante</span>
+    </div>
 
-<p>
-  Consulta cuál será el próximo número de comprobante disponible
-  para un determinado CUIT, punto de venta y tipo de comprobante.
-</p>
+    <p>
+      Consulta cuál será el próximo número de comprobante disponible
+      para un determinado CUIT, punto de venta y tipo de comprobante.
+    </p>
 
-<div class="warning">
-  Esta operación no emite ningún comprobante.
-</div>
-
-
-<h3>Headers</h3>
-
-<pre><code>X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
+    <div class="warning">
+      Esta operación no emite ningún comprobante.
+    </div>
 
 
-<h3>Parámetros</h3>
+    <h3>Headers</h3>
 
-<table>
-
-  <tr>
-    <th>Parámetro</th>
-    <th>Tipo</th>
-    <th>Descripción</th>
-  </tr>
-
-  <tr>
-    <td>token</td>
-    <td>string</td>
-    <td>
-      Token de WSAA.
-    </td>
-  </tr>
-
-  <tr>
-    <td>sign</td>
-    <td>string</td>
-    <td>
-      Sign de WSAA.
-    </td>
-  </tr>
-
-  <tr>
-    <td>cuit</td>
-    <td>string</td>
-    <td>
-      CUIT emisora.
-    </td>
-  </tr>
-
-  <tr>
-    <td>puntoVenta</td>
-    <td>number</td>
-    <td>
-      Punto de venta.
-    </td>
-  </tr>
-
-  <tr>
-    <td>tipoComprobante</td>
-    <td>number</td>
-    <td>
-      Código de comprobante.
-    </td>
-  </tr>
-
-</table>
+    <pre><code>X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
 
 
-<h3>Ejemplo</h3>
+    <h3>Parámetros</h3>
 
-<pre><code>GET /wsfe/ultimo-comprobante?token=TOKEN&amp;sign=SIGN&amp;cuit=20111111112&amp;puntoVenta=1&amp;tipoComprobante=11 HTTP/1.1
+    <table>
+
+      <tr>
+        <th>Parámetro</th>
+        <th>Tipo</th>
+        <th>Descripción</th>
+      </tr>
+
+      <tr>
+        <td>token</td>
+        <td>string</td>
+        <td>
+          Token de WSAA.
+        </td>
+      </tr>
+
+      <tr>
+        <td>sign</td>
+        <td>string</td>
+        <td>
+          Sign de WSAA.
+        </td>
+      </tr>
+
+      <tr>
+        <td>cuit</td>
+        <td>string</td>
+        <td>
+          CUIT emisora.
+        </td>
+      </tr>
+
+      <tr>
+        <td>puntoVenta</td>
+        <td>number</td>
+        <td>
+          Punto de venta.
+        </td>
+      </tr>
+
+      <tr>
+        <td>tipoComprobante</td>
+        <td>number</td>
+        <td>
+          Código de comprobante.
+        </td>
+      </tr>
+
+    </table>
+
+
+    <h3>Ejemplo</h3>
+
+    <pre><code>GET /wsfe/ultimo-comprobante?token=TOKEN&amp;sign=SIGN&amp;cuit=20111111112&amp;puntoVenta=1&amp;tipoComprobante=11 HTTP/1.1
 
 Host: api-arca-wsfe.onrender.com
 X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre>
 
-<h3>Respuesta</h3>
+    <h3>Respuesta</h3>
 
-<pre><code>{
+    <pre><code>{
 
 "exito": true,
 "proximoNumero": 46
 }</code></pre>
 
-<div class="note">
-  Si ARCA informa que el último comprobante autorizado es el 45,
-  la API devuelve 46.
-</div>
+    <div class="note">
+      Si ARCA informa que el último comprobante autorizado es el 45,
+      la API devuelve 46.
+    </div>
 
   </div>
 
@@ -1061,7 +1443,7 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
 
 <section id="reintentos">
 
-  <h2>9. Emisión inicial y reintentos</h2>
+  <h2>10. Emisión inicial y reintentos</h2>
 
   <p>
     La API distingue entre una emisión normal y los reintentos.
@@ -1069,29 +1451,29 @@ X-Internal-Api-Key: eYDlzQXNWKOP7H24kp3aGovZ65drRMJCwunB8mLtUhjFxE1g</code></pre
 
   <table>
 
-<tr>
-  <th>Situación</th>
-  <th>reintentoAutomatico</th>
-  <th>Rate limit</th>
-</tr>
+    <tr>
+      <th>Situación</th>
+      <th>reintentoAutomatico</th>
+      <th>Rate limit</th>
+    </tr>
 
-<tr>
-  <td>Emisión inicial</td>
-  <td>false</td>
-  <td>No</td>
-</tr>
+    <tr>
+      <td>Emisión inicial</td>
+      <td>false</td>
+      <td>No</td>
+    </tr>
 
-<tr>
-  <td>Reintento manual</td>
-  <td>false</td>
-  <td>No</td>
-</tr>
+    <tr>
+      <td>Reintento manual</td>
+      <td>false</td>
+      <td>No</td>
+    </tr>
 
-<tr>
-  <td>Reintento automático</td>
-  <td>true</td>
-  <td>Sí</td>
-</tr>
+    <tr>
+      <td>Reintento automático</td>
+      <td>true</td>
+      <td>Sí</td>
+    </tr>
 
   </table>
 
@@ -1161,85 +1543,85 @@ Retry-After: 120
 
 <section id="respuestas">
 
-  <h2>10. Respuestas HTTP</h2>
+  <h2>11. Respuestas HTTP</h2>
 
   <table>
 
-<tr>
-  <th>HTTP</th>
-  <th>Significado</th>
-  <th>Acción recomendada</th>
-</tr>
+    <tr>
+      <th>HTTP</th>
+      <th>Significado</th>
+      <th>Acción recomendada</th>
+    </tr>
 
-<tr>
-  <td>200</td>
-  <td>
-    La API procesó la solicitud.
-  </td>
-  <td>
-    Comprobar el campo exito.
-  </td>
-</tr>
+    <tr>
+      <td>200</td>
+      <td>
+        La API procesó la solicitud.
+      </td>
+      <td>
+        Comprobar el campo exito.
+      </td>
+    </tr>
 
-<tr>
-  <td>400</td>
-  <td>
-    Request inválido o incompleto.
-  </td>
-  <td>
-    Corregir los datos enviados.
-  </td>
-</tr>
+    <tr>
+      <td>400</td>
+      <td>
+        Request inválido o incompleto.
+      </td>
+      <td>
+        Corregir los datos enviados.
+      </td>
+    </tr>
 
-<tr>
-  <td>401</td>
-  <td>
-    API key ausente o incorrecta.
-  </td>
-  <td>
-    Verificar X-Internal-Api-Key.
-  </td>
-</tr>
+    <tr>
+      <td>401</td>
+      <td>
+        API key ausente o incorrecta.
+      </td>
+      <td>
+        Verificar X-Internal-Api-Key.
+      </td>
+    </tr>
 
-<tr>
-  <td>404</td>
-  <td>
-    Endpoint inexistente.
-  </td>
-  <td>
-    Verificar la URL.
-  </td>
-</tr>
+    <tr>
+      <td>404</td>
+      <td>
+        Endpoint inexistente.
+      </td>
+      <td>
+        Verificar la URL.
+      </td>
+    </tr>
 
-<tr>
-  <td>408</td>
-  <td>
-    Timeout.
-  </td>
-  <td>
-    Puede considerarse un error transitorio.
-  </td>
-</tr>
+    <tr>
+      <td>408</td>
+      <td>
+        Timeout.
+      </td>
+      <td>
+        Puede considerarse un error transitorio.
+      </td>
+    </tr>
 
-<tr>
-  <td>429</td>
-  <td>
-    Rate limit de reintento automático.
-  </td>
-  <td>
-    Esperar el valor indicado por Retry-After.
-  </td>
-</tr>
+    <tr>
+      <td>429</td>
+      <td>
+        Rate limit de reintento automático.
+      </td>
+      <td>
+        Esperar el valor indicado por Retry-After.
+      </td>
+    </tr>
 
-<tr>
-  <td>500</td>
-  <td>
-    Error interno.
-  </td>
-  <td>
-    Registrar el error y evaluar reintento.
-  </td>
-</tr>
+    <tr>
+      <td>500</td>
+      <td>
+        Error interno.
+      </td>
+      <td>
+        Registrar el error y evaluar reintento.
+      </td>
+    </tr>
 
   </table>
 
@@ -1263,137 +1645,137 @@ HTTP 200 + exito false
 
 <section id="tipos-comprobante">
 
-  <h2>11. Tipos de comprobante</h2>
+  <h2>12. Tipos de comprobante</h2>
 
   <table>
 
-<tr>
-  <th>Código</th>
-  <th>Comprobante</th>
-  <th>Letra</th>
-  <th>IVA</th>
-  <th>Observaciones</th>
-</tr>
+    <tr>
+      <th>Código</th>
+      <th>Comprobante</th>
+      <th>Letra</th>
+      <th>IVA</th>
+      <th>Observaciones</th>
+    </tr>
 
-<tr>
-  <td>1</td>
-  <td>Factura</td>
-  <td>A</td>
-  <td>Sí</td>
-  <td></td>
-</tr>
+    <tr>
+      <td>1</td>
+      <td>Factura</td>
+      <td>A</td>
+      <td>Sí</td>
+      <td></td>
+    </tr>
 
-<tr>
-  <td>2</td>
-  <td>Nota de Débito</td>
-  <td>A</td>
-  <td>Sí</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>2</td>
+      <td>Nota de Débito</td>
+      <td>A</td>
+      <td>Sí</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>3</td>
-  <td>Nota de Crédito</td>
-  <td>A</td>
-  <td>Sí</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>3</td>
+      <td>Nota de Crédito</td>
+      <td>A</td>
+      <td>Sí</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>6</td>
-  <td>Factura</td>
-  <td>B</td>
-  <td>No</td>
-  <td></td>
-</tr>
+    <tr>
+      <td>6</td>
+      <td>Factura</td>
+      <td>B</td>
+      <td>No</td>
+      <td></td>
+    </tr>
 
-<tr>
-  <td>7</td>
-  <td>Nota de Débito</td>
-  <td>B</td>
-  <td>No</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>7</td>
+      <td>Nota de Débito</td>
+      <td>B</td>
+      <td>No</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>8</td>
-  <td>Nota de Crédito</td>
-  <td>B</td>
-  <td>No</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>8</td>
+      <td>Nota de Crédito</td>
+      <td>B</td>
+      <td>No</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>11</td>
-  <td>Factura</td>
-  <td>C</td>
-  <td>No</td>
-  <td></td>
-</tr>
+    <tr>
+      <td>11</td>
+      <td>Factura</td>
+      <td>C</td>
+      <td>No</td>
+      <td></td>
+    </tr>
 
-<tr>
-  <td>12</td>
-  <td>Nota de Débito</td>
-  <td>C</td>
-  <td>No</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>12</td>
+      <td>Nota de Débito</td>
+      <td>C</td>
+      <td>No</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>13</td>
-  <td>Nota de Crédito</td>
-  <td>C</td>
-  <td>No</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>13</td>
+      <td>Nota de Crédito</td>
+      <td>C</td>
+      <td>No</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>19</td>
-  <td>Factura</td>
-  <td>E</td>
-  <td>No</td>
-  <td>Exportación.</td>
-</tr>
+    <tr>
+      <td>19</td>
+      <td>Factura</td>
+      <td>E</td>
+      <td>No</td>
+      <td>Exportación.</td>
+    </tr>
 
-<tr>
-  <td>20</td>
-  <td>Nota de Débito</td>
-  <td>E</td>
-  <td>No</td>
-  <td>Exportación.</td>
-</tr>
+    <tr>
+      <td>20</td>
+      <td>Nota de Débito</td>
+      <td>E</td>
+      <td>No</td>
+      <td>Exportación.</td>
+    </tr>
 
-<tr>
-  <td>21</td>
-  <td>Nota de Crédito</td>
-  <td>E</td>
-  <td>No</td>
-  <td>Exportación.</td>
-</tr>
+    <tr>
+      <td>21</td>
+      <td>Nota de Crédito</td>
+      <td>E</td>
+      <td>No</td>
+      <td>Exportación.</td>
+    </tr>
 
-<tr>
-  <td>51</td>
-  <td>Factura</td>
-  <td>M</td>
-  <td>Sí</td>
-  <td></td>
-</tr>
+    <tr>
+      <td>51</td>
+      <td>Factura</td>
+      <td>M</td>
+      <td>Sí</td>
+      <td></td>
+    </tr>
 
-<tr>
-  <td>52</td>
-  <td>Nota de Débito</td>
-  <td>M</td>
-  <td>Sí</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>52</td>
+      <td>Nota de Débito</td>
+      <td>M</td>
+      <td>Sí</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
-<tr>
-  <td>53</td>
-  <td>Nota de Crédito</td>
-  <td>M</td>
-  <td>Sí</td>
-  <td>Requiere comprobantes asociados.</td>
-</tr>
+    <tr>
+      <td>53</td>
+      <td>Nota de Crédito</td>
+      <td>M</td>
+      <td>Sí</td>
+      <td>Requiere comprobantes asociados.</td>
+    </tr>
 
   </table>
 
@@ -1401,34 +1783,34 @@ HTTP 200 + exito false
 
 <section id="documentos">
 
-  <h2>12. Tipos de documento</h2>
+  <h2>13. Tipos de documento</h2>
 
   <table>
 
-<tr>
-  <th>Código</th>
-  <th>Documento</th>
-</tr>
+    <tr>
+      <th>Código</th>
+      <th>Documento</th>
+    </tr>
 
-<tr>
-  <td>80</td>
-  <td>CUIT</td>
-</tr>
+    <tr>
+      <td>80</td>
+      <td>CUIT</td>
+    </tr>
 
-<tr>
-  <td>86</td>
-  <td>CUIL</td>
-</tr>
+    <tr>
+      <td>86</td>
+      <td>CUIL</td>
+    </tr>
 
-<tr>
-  <td>96</td>
-  <td>DNI</td>
-</tr>
+    <tr>
+      <td>96</td>
+      <td>DNI</td>
+    </tr>
 
-<tr>
-  <td>99</td>
-  <td>Consumidor Final / sin identificar</td>
-</tr>
+    <tr>
+      <td>99</td>
+      <td>Consumidor Final / sin identificar</td>
+    </tr>
 
   </table>
 
@@ -1436,64 +1818,64 @@ HTTP 200 + exito false
 
 <section id="iva">
 
-  <h2>13. Condición frente al IVA</h2>
+  <h2>14. Condición frente al IVA</h2>
 
   <table>
 
-<tr>
-  <th>Código</th>
-  <th>Descripción</th>
-</tr>
+    <tr>
+      <th>Código</th>
+      <th>Descripción</th>
+    </tr>
 
-<tr>
-  <td>1</td>
-  <td>IVA Responsable Inscripto</td>
-</tr>
+    <tr>
+      <td>1</td>
+      <td>IVA Responsable Inscripto</td>
+    </tr>
 
-<tr>
-  <td>4</td>
-  <td>IVA Sujeto Exento</td>
-</tr>
+    <tr>
+      <td>4</td>
+      <td>IVA Sujeto Exento</td>
+    </tr>
 
-<tr>
-  <td>5</td>
-  <td>Consumidor Final</td>
-</tr>
+    <tr>
+      <td>5</td>
+      <td>Consumidor Final</td>
+    </tr>
 
-<tr>
-  <td>6</td>
-  <td>Responsable Monotributo</td>
-</tr>
+    <tr>
+      <td>6</td>
+      <td>Responsable Monotributo</td>
+    </tr>
 
-<tr>
-  <td>7</td>
-  <td>Sujeto No Categorizado</td>
-</tr>
+    <tr>
+      <td>7</td>
+      <td>Sujeto No Categorizado</td>
+    </tr>
 
-<tr>
-  <td>8</td>
-  <td>Proveedor del Exterior</td>
-</tr>
+    <tr>
+      <td>8</td>
+      <td>Proveedor del Exterior</td>
+    </tr>
 
-<tr>
-  <td>9</td>
-  <td>Cliente del Exterior</td>
-</tr>
+    <tr>
+      <td>9</td>
+      <td>Cliente del Exterior</td>
+    </tr>
 
-<tr>
-  <td>10</td>
-  <td>IVA Liberado</td>
-</tr>
+    <tr>
+      <td>10</td>
+      <td>IVA Liberado</td>
+    </tr>
 
-<tr>
-  <td>13</td>
-  <td>Monotributista Social</td>
-</tr>
+    <tr>
+      <td>13</td>
+      <td>Monotributista Social</td>
+    </tr>
 
-<tr>
-  <td>15</td>
-  <td>IVA No Alcanzado</td>
-</tr>
+    <tr>
+      <td>15</td>
+      <td>IVA No Alcanzado</td>
+    </tr>
 
   </table>
 
@@ -1501,7 +1883,7 @@ HTTP 200 + exito false
 
 <section id="alicuotas">
 
-  <h2>14. Alícuotas de IVA</h2>
+  <h2>15. Alícuotas de IVA</h2>
 
   <p>
     Cuando el comprobante requiere discriminar IVA,
@@ -1520,40 +1902,40 @@ HTTP 200 + exito false
 
   <table>
 
-<tr>
-  <th>ID</th>
-  <th>Alícuota</th>
-</tr>
+    <tr>
+      <th>ID</th>
+      <th>Alícuota</th>
+    </tr>
 
-<tr>
-  <td>3</td>
-  <td>0%</td>
-</tr>
+    <tr>
+      <td>3</td>
+      <td>0%</td>
+    </tr>
 
-<tr>
-  <td>4</td>
-  <td>10,5%</td>
-</tr>
+    <tr>
+      <td>4</td>
+      <td>10,5%</td>
+    </tr>
 
-<tr>
-  <td>5</td>
-  <td>21%</td>
-</tr>
+    <tr>
+      <td>5</td>
+      <td>21%</td>
+    </tr>
 
-<tr>
-  <td>6</td>
-  <td>27%</td>
-</tr>
+    <tr>
+      <td>6</td>
+      <td>27%</td>
+    </tr>
 
-<tr>
-  <td>8</td>
-  <td>5%</td>
-</tr>
+    <tr>
+      <td>8</td>
+      <td>5%</td>
+    </tr>
 
-<tr>
-  <td>9</td>
-  <td>2,5%</td>
-</tr>
+    <tr>
+      <td>9</td>
+      <td>2,5%</td>
+    </tr>
 
   </table>
 
@@ -1561,50 +1943,50 @@ HTTP 200 + exito false
 
 <section id="errores">
 
-  <h2>15. Errores</h2>
+  <h2>16. Errores</h2>
 
   <h3>Errores propios de la API</h3>
 
   <table>
 
-<tr>
-  <th>Código</th>
-  <th>HTTP</th>
-  <th>Significado</th>
-</tr>
+    <tr>
+      <th>Código</th>
+      <th>HTTP</th>
+      <th>Significado</th>
+    </tr>
 
-<tr>
-  <td>VALIDACION</td>
-  <td>400</td>
-  <td>
-    El body o los parámetros no cumplen el esquema esperado.
-  </td>
-</tr>
+    <tr>
+      <td>VALIDACION</td>
+      <td>400</td>
+      <td>
+        El body o los parámetros no cumplen el esquema esperado.
+      </td>
+    </tr>
 
-<tr>
-  <td>RATE_LIMIT</td>
-  <td>429</td>
-  <td>
-    Se superó temporalmente el límite de reintentos automáticos
-    para una combinación CUIT + invoiceId.
-  </td>
-</tr>
+    <tr>
+      <td>RATE_LIMIT</td>
+      <td>429</td>
+      <td>
+        Se superó temporalmente el límite de reintentos automáticos
+        para una combinación CUIT + invoiceId.
+      </td>
+    </tr>
 
-<tr>
-  <td>ERROR_INTERNO</td>
-  <td>500</td>
-  <td>
-    Error interno, timeout o problema de comunicación.
-  </td>
-</tr>
+    <tr>
+      <td>ERROR_INTERNO</td>
+      <td>500</td>
+      <td>
+        Error interno, timeout o problema de comunicación.
+      </td>
+    </tr>
 
-<tr>
-  <td>NOT_FOUND</td>
-  <td>404</td>
-  <td>
-    Endpoint inexistente.
-  </td>
-</tr>
+    <tr>
+      <td>NOT_FOUND</td>
+      <td>404</td>
+      <td>
+        Endpoint inexistente.
+      </td>
+    </tr>
 
   </table>
 
@@ -1634,7 +2016,7 @@ HTTP 200 + exito false
 
 <section id="seguridad">
 
-  <h2>16. Seguridad</h2>
+  <h2>17. Seguridad</h2>
 
   <h3>API key</h3>
 
@@ -1671,7 +2053,7 @@ HTTP 200 + exito false
 
 <section id="ejemplos">
 
-  <h2>17. Ejemplos de integración</h2>
+  <h2>18. Ejemplos de integración</h2>
 
   <h3>PHP / Laravel</h3>
 
@@ -1788,52 +2170,52 @@ if (
 
 <section id="flujo-completo">
 
-  <h2>18. Flujo completo recomendado</h2>
+  <h2>19. Flujo completo recomendado</h2>
 
   <div class="flow">
 
-<div class="flow-item">
-  <span class="flow-number">1.</span>
-  Obtener credenciales Token y Sign mediante WSAA.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">1.</span>
+      Obtener credenciales Token y Sign mediante WSAA.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">2.</span>
-  Preparar los datos del comprobante.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">2.</span>
+      Preparar los datos del comprobante.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">3.</span>
-  Generar un invoiceId interno para identificar la operación.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">3.</span>
+      Generar un invoiceId interno para identificar la operación.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">4.</span>
-  Enviar POST a /wsfe/solicitar-cae.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">4.</span>
+      Enviar POST a /wsfe/solicitar-cae.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">5.</span>
-  Comprobar HTTP 200 y después comprobar el campo exito.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">5.</span>
+      Comprobar HTTP 200 y después comprobar el campo exito.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">6.</span>
-  Si exito=true, guardar CAE, fecha de vencimiento y número
-  de comprobante.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">6.</span>
+      Si exito=true, guardar CAE, fecha de vencimiento y número
+      de comprobante.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">7.</span>
-  Si exito=false, analizar el contenido de errores.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">7.</span>
+      Si exito=false, analizar el contenido de errores.
+    </div>
 
-<div class="flow-item">
-  <span class="flow-number">8.</span>
-  Si el consumidor implementa reintentos automáticos,
-  utilizar reintentoAutomatico=true y respetar Retry-After
-  cuando exista una respuesta 429.
-</div>
+    <div class="flow-item">
+      <span class="flow-number">8.</span>
+      Si el consumidor implementa reintentos automáticos,
+      utilizar reintentoAutomatico=true y respetar Retry-After
+      cuando exista una respuesta 429.
+    </div>
 
   </div>
 
@@ -1841,7 +2223,7 @@ if (
 
 <section id="oficial">
 
-  <h2>19. Documentación oficial</h2>
+  <h2>20. Documentación oficial</h2>
 
   <p>
     Esta API utiliza servicios oficiales de ARCA.
@@ -1873,19 +2255,16 @@ if (
 
 <footer>
 
-API ARCA WSFE — Documentación técnica
+  API ARCA WSFE — Documentación técnica
 
   <br>
 
-<a
-href="https://github.com/Maximiliano-A-P/API_ARCA_WSFE"
-target="_blank"
-rel="noopener noreferrer"
-
->
-
-Repositorio de GitHub
-
+  <a
+    href="https://github.com/Maximiliano-A-P/API_ARCA_WSFE"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Repositorio de GitHub
   </a>
 
 </footer>
